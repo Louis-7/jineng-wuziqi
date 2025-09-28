@@ -1,0 +1,80 @@
+# Gomoku (Card Edition) — Official Rules
+
+This project blends classic Gomoku with a draw–play–discard card mechanic. This document is the single source of truth for gameplay and testing.
+
+## Board and Victory
+- Board: 15×15 by default (configurable).
+- Stones: Player 1 = Black (1), Player 2 = White (2).
+- Win: A contiguous line of 5 or more stones of the same color in any direction (horizontal, vertical, diagonal) immediately wins the game.
+- Simultaneous five-in-a-row (both players form five during a single effect): by default, the active player wins. This may become configurable in future versions (for example, draw or re-evaluate).
+
+## Turn and Deck Flow
+- Players alternate turns.
+- Per turn:
+  1) Draw: Draw 2 cards from the deck. If the draw pile is insufficient, reshuffle the discard pile to complete the draw.
+  2) Choose: Select 1 card to play and discard the other.
+  3) Target: If the played card requires a target (cell/stone/player), select a legal target; illegal selections must be corrected.
+  4) Resolve: Apply the card effect to update the board and statuses.
+  5) Check Win: If a five-in-a-row is achieved, end the game immediately.
+  6) End: End the turn; switch to the opponent (if the opponent is frozen, skip their next turn).
+- Deck and discard:
+  - Shared deck and discard piles.
+  - When drawing with insufficient cards in the draw pile, reshuffle the discard pile to continue the draw.
+- First player: Player 1 by default (configurable).
+
+## Base Cards
+Format: Card → Target/Restrictions → Effect → Notes.
+
+### 1) Place Stone
+- Target/Restrictions:
+  - Must select an empty board cell.
+- Effect:
+  - Place one stone of the current player on that cell.
+- Notes:
+  - Immediately triggers a win check after resolution.
+
+### 2) Take Stone
+- Target/Restrictions:
+  - Must select an opponent’s stone (cannot select your own stone).
+- Effect:
+  - Remove the selected stone from the board.
+- Notes:
+  - Removing a stone placed in the same round is allowed.
+
+## Skill Cards (MVP)
+
+### 3) Polarity Inversion
+- Target/Restrictions:
+  - No target; applies globally.
+- Effect:
+  - Swap ownership of all stones on the board: Black ↔ White (1 ↔ 2).
+- Notes:
+  - Perform win check after resolution; if both sides have five, the active player wins.
+
+### 4) Time Freeze
+- Target/Restrictions:
+  - Target is the opponent player.
+- Effect:
+  - Opponent skips their next turn. This status stacks (multiple freezes → multiple skips).
+- Notes:
+  - At the start of the opponent’s turn, if `skipNextTurns > 0`, immediately skip draw and consume one skip; turn passes back.
+
+### 5) Spontaneous Generation
+- Target/Restrictions:
+  - No target; requires at least 5 empty cells on the board. If fewer than 5, the card is not playable (UI should disable).
+- Effect:
+  - Randomly select 5 distinct empty cells; for each cell, independently assign a random color (Black/White) and place a stone.
+- Notes:
+  - If both sides achieve five during this single resolution, the active player wins.
+  - All randomness uses the match seed for reproducible replays and online consistency.
+
+## Additional Rules and Notes
+- Seed and reproducibility:
+  - A match seed is set at start. Shuffling and random placements must use the seed-driven PRNG.
+- Interactions and invalid actions:
+  - Invalid targets (placing on occupied cells, taking own stones, playing Spontaneous Generation with insufficient empty cells, etc.) must be rejected with clear feedback.
+- Configurable options (future):
+  - Board size, first player, deck composition, simultaneous-five policy, etc.
+
+---
+Any rule changes must update this file and state the impact in the commit message. This file is the authoritative reference for implementation and tests.

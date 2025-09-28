@@ -47,17 +47,49 @@ A web-based “Gomoku + card-draw” game with a clear modular architecture to s
 - All randomness uses the match seed for reproducibility and online consistency.
 - Command/Event pattern facilitates networking and replay.
 
+## Online Design Notes (draft)
+
+- Transport contract:
+  - handshake: { protocolVersion; matchId; seed; settings }
+  - send(Command): client → host; on(Event|StateSync): host → client
+  - protocolVersion: semantic version; minor compatible, major may require upgrade
+- Sync model:
+  - Event-sourced log with deterministic engine → authoritative StateSync snapshots for late join/recovery
+  - All randomness derives from seed; no client-side hidden RNG
+- Commands (examples):
+  - startMatch(settings), drawTwo(), playCard(cardId, target?), discard(cardId), endTurn()
+- Events (examples):
+  - matchStarted, cardsDrawn, cardPlayed, effectResolved, winChecked, turnEnded, stateSync
+- Reconciliation:
+  - Client submits intents; server/host validates via engine and echoes canonical events
+  - Mismatch → reject with reason; client rolls back to last StateSync
+
+## AI Design Notes (draft)
+
+- BotStrategy interface:
+  - decideTurn(state, availableCards, rng): Command[] | { cardId; target? } plan
+  - Pure, time-bounded, no side effects; random choices use injected rng from seed
+- Baseline strategy:
+  - Random legal target selection with simple heuristics (prefer immediate win/block)
+- Injection points:
+  - Engine queries BotStrategy when current player is bot; UI remains passive observer
+- Determinism:
+  - Given same seed/state, bot decisions are reproducible for replay/testing
+
 ## Testing & Quality Gates
+
 - Unit: win detection, draw/reshuffle, card effects/preconditions, FSM transitions
 - E2E: full match flow, invalid target feedback, the three skill cards
 - CI: Lint/Typecheck/Test/Build must pass; coverage threshold for core logic
   - Tests must cover simultaneous-five outcomes for both policies ('attacker'/'draw') after effect resolution (e.g., Polarity Inversion, Spontaneous Generation)
 
 ## MVP Acceptance
+
 - Hot-seat PvP; turn flow draw 2 / play 1 / discard 1; place/take/three skills work; immediate win checks; freeze skips turns; Spontaneous Generation requires ≥5 empty cells.
 - Usable UI with basic accessibility; configurable and persisted basic settings.
 
 ## Suggested Layout
+
 - src/
   - domain/ (board, rng, deck, cards, engine, fsm)
   - ui/ (components, pages)

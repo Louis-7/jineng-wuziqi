@@ -4,8 +4,8 @@
 
 ## 1) Product rules & docs
 - [x] Finalize simultaneous-five policy and configurability
-- [] Review and approve Rules.md (including three skill cards)
-- [] Add online/AI design notes in Info.md
+- [x] Review and approve Rules.md (including three skill cards)
+- [x] Add online/AI design notes in Info.md
 
 ## 2) Project scaffolding
 - [] Initialize Vite + React + TypeScript app

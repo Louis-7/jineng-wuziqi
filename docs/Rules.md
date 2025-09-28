@@ -26,49 +26,63 @@ This project blends classic Gomoku with a draw–play–discard card mechanic. T
 Format: Card → Target/Restrictions → Effect → Notes.
 
 ### 1) Place Stone
+
 - Target/Restrictions:
   - Must select an empty board cell.
 - Effect:
   - Place one stone of the current player on that cell.
 - Notes:
   - Immediately triggers a win check after resolution.
+  - Illegal target: selecting an occupied cell must be rejected (UI should disable; engine must validate and refuse the action).
+
 
 ### 2) Take Stone
+
 - Target/Restrictions:
   - Must select an opponent’s stone (cannot select your own stone).
 - Effect:
   - Remove the selected stone from the board.
 - Notes:
   - Removing a stone placed in the same round is allowed.
+  - Illegal target: selecting your own stone must be rejected with clear feedback.
+
 
 ## Skill Cards (MVP)
 
 ### 3) Polarity Inversion
+
 - Target/Restrictions:
   - No target; applies globally.
 - Effect:
   - Swap ownership of all stones on the board: Black ↔ White (1 ↔ 2).
 - Notes:
-  - Perform win check after resolution; if both sides have five, the active player wins.
+  - Perform win check after resolution; if both sides have five, apply the Simultaneous Five Policy.
+
 
 ### 4) Time Freeze
+
 - Target/Restrictions:
   - Target is the opponent player.
 - Effect:
   - Opponent skips their next turn. This status stacks (multiple freezes → multiple skips).
 - Notes:
   - At the start of the opponent’s turn, if `skipNextTurns > 0`, immediately skip draw and consume one skip; turn passes back.
+  - Cannot target self; the engine must reject attempts to target the active player.
+
 
 ### 5) Spontaneous Generation
+
 - Target/Restrictions:
   - No target; requires at least 5 empty cells on the board. If fewer than 5, the card is not playable (UI should disable).
 - Effect:
   - Randomly select 5 distinct empty cells; for each cell, independently assign a random color (Black/White) and place a stone.
 - Notes:
-  - If both sides achieve five during this single resolution, the active player wins.
+  - If both sides achieve five during this single resolution, apply the Simultaneous Five Policy.
   - All randomness uses the match seed for reproducible replays and online consistency.
 
+
 ## Simultaneous Five Policy
+
 When a single effect (card or action) resolves and, as a result, both players have one or more lines with length ≥ 5 at the same time, apply this policy:
 
 - Timing: Always resolve the entire effect first, then perform a global win check.
@@ -80,6 +94,7 @@ When a single effect (card or action) resolves and, as a result, both players ha
 - Typical sources: global effects such as Polarity Inversion and multi-placement effects such as Spontaneous Generation may trigger simultaneous fives; apply the policy after their full resolution.
 
 ## Additional Rules and Notes
+
 - Seed and reproducibility:
   - A match seed is set at start. Shuffling and random placements must use the seed-driven PRNG.
 - Interactions and invalid actions:

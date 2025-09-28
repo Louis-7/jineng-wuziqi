@@ -1,7 +1,7 @@
 import { setup, assign } from 'xstate';
 import type { Player } from '../board';
 import type { PRNG } from '../rng';
-import { draw as drawCards, discard as discardCards, type CardId } from '../deck';
+import { draw as drawCards, type CardId } from '../deck';
 import type { MatchContext, TargetValue } from '../cards';
 import { DefaultCardRegistry } from '../cards';
 import { applyOps, resolveWins, type GameState, type SimultaneousFivePolicy } from '../engine';
@@ -14,6 +14,15 @@ export interface TurnContext {
   drawn: CardId[]; // last drawn 2
   chosen?: CardId; // chosen to play
   target?: unknown; // target value depends on card
+  logs: TurnLogEntry[];
+}
+
+export type TurnLogTag = 'drawTwo' | 'choose' | 'selectTarget' | 'resolve' | 'checkWin' | 'skip';
+
+export interface TurnLogEntry {
+  at: number; // monotonically increasing sequence number starting at 1
+  tag: TurnLogTag;
+  message: string;
 }
 
 export type TurnEvent =
@@ -33,44 +42,91 @@ export function createTurnMachine(initialContext: TurnContext) {
       doDrawTwo: assign({
         drawn: ({ context }) => drawCards(context.game.deck, 2, context.rng),
       }),
-      setChosen: assign({
-        chosen: ({ context, event }) => {
-          if (event.type !== 'CHOOSE_CARD') return context.chosen;
-          const other = context.drawn.find((c: CardId) => c !== event.cardId);
-          if (other) discardCards(context.game.deck, [other]);
-          return event.cardId;
+      logDrawTwo: assign({
+        logs: ({ context }) => {
+          const at = context.logs.length + 1;
+          const msg = `drawTwo: [${context.drawn.join(', ')}]`;
+          return [...context.logs, { at, tag: 'drawTwo', message: msg }];
         },
+      }),
+      setChosen: assign(({ context, event }) => {
+        if (event.type !== 'CHOOSE_CARD') return {};
+        const other = context.drawn.find((c: CardId) => c !== event.cardId);
+        if (!other) return { chosen: event.cardId };
+        // immutably discard the unchosen card
+        return {
+          chosen: event.cardId,
+          game: {
+            ...context.game,
+            deck: {
+              drawPile: context.game.deck.drawPile,
+              discardPile: [...context.game.deck.discardPile, other],
+            },
+          },
+        };
+      }),
+      logChosen: assign(({ context, event }) => {
+        if (event.type !== 'CHOOSE_CARD') return {};
+        const at = context.logs.length + 1;
+        const other = context.drawn.find((c: CardId) => c !== event.cardId);
+        const msg = other
+          ? `choose: ${event.cardId} (discard ${other})`
+          : `choose: ${event.cardId}`;
+        return { logs: [...context.logs, { at, tag: 'choose', message: msg }] };
       }),
       setTarget: assign({
         target: ({ context, event }) =>
           event.type === 'SELECT_TARGET' ? event.target : context.target,
       }),
-      applyCardEffect: assign({
-        game: ({ context }) => {
-          if (!context.chosen) return context.game;
-          const def = context.registry.require(context.chosen);
-          const mc: MatchContext = {
-            board: context.game.board,
-            currentPlayer: context.game.currentPlayer,
-            skipNextTurns: context.game.status.skipNextTurns,
-          };
-          const can = def.canPlay(mc);
-          if (!can.ok) return context.game;
-          // The event target is unknown at runtime; we coerce to TargetValue and let validateTarget handle legality.
-          const target: TargetValue = (context.target ?? { kind: 'none' }) as TargetValue;
-          const validated = def.validateTarget(mc, target);
-          if (!validated.ok) return context.game;
-          const effect = def.effect(mc, context.rng, validated.value);
-          const nextGame = applyOps(context.game, effect.ops);
-          discardCards(nextGame.deck, [context.chosen]);
-          return nextGame;
-        },
+      logTarget: assign(({ context, event }) => {
+        if (event.type !== 'SELECT_TARGET') return {};
+        const at = context.logs.length + 1;
+        const msg = `selectTarget: ${JSON.stringify(event.target)}`;
+        return { logs: [...context.logs, { at, tag: 'selectTarget', message: msg }] };
+      }),
+      applyCardEffect: assign(({ context }) => {
+        if (!context.chosen) return {};
+        const def = context.registry.require(context.chosen);
+        const mc: MatchContext = {
+          board: context.game.board,
+          currentPlayer: context.game.currentPlayer,
+          skipNextTurns: context.game.status.skipNextTurns,
+        };
+        const can = def.canPlay(mc);
+        if (!can.ok) return {};
+        // The event target is unknown at runtime; we coerce to TargetValue and let validateTarget handle legality.
+        const target: TargetValue = (context.target ?? { kind: 'none' }) as TargetValue;
+        const validated = def.validateTarget(mc, target);
+        if (!validated.ok) return {};
+        const effect = def.effect(mc, context.rng, validated.value);
+        const nextGame = applyOps(context.game, effect.ops);
+        // immutably discard the played card
+        return {
+          game: {
+            ...nextGame,
+            deck: {
+              drawPile: nextGame.deck.drawPile,
+              discardPile: [...nextGame.deck.discardPile, context.chosen],
+            },
+          },
+          // store ops length in message via separate logger action
+        };
+      }),
+      logEffect: assign(({ context }) => {
+        const at = context.logs.length + 1;
+        const msg = `resolve: ${String(context.chosen)} applied`;
+        return { logs: [...context.logs, { at, tag: 'resolve', message: msg }] };
       }),
       applyWinCheck: assign({
         game: ({ context }) => {
           if (context.game.winner) return context.game;
           return resolveWins(context.game, context.game.currentPlayer, context.policy);
         },
+      }),
+      logWinCheck: assign(({ context }) => {
+        const at = context.logs.length + 1;
+        const msg = `checkWin: ${String(context.game.winner ?? 'none')}`;
+        return { logs: [...context.logs, { at, tag: 'checkWin', message: msg }] };
       }),
       advanceTurn: assign({
         game: ({ context }) => {
@@ -94,6 +150,11 @@ export function createTurnMachine(initialContext: TurnContext) {
             },
           };
         },
+      }),
+      logSkip: assign(({ context }) => {
+        const at = context.logs.length + 1;
+        const msg = 'skip: consumed 1';
+        return { logs: [...context.logs, { at, tag: 'skip', message: msg }] };
       }),
     },
     guards: {
@@ -125,18 +186,18 @@ export function createTurnMachine(initialContext: TurnContext) {
     states: {
       maybeSkip: {
         always: [
-          { guard: 'shouldSkip', actions: 'consumeSkip', target: 'endTurn' },
+          { guard: 'shouldSkip', actions: ['consumeSkip', 'logSkip'], target: 'endTurn' },
           { target: 'drawTwo' },
         ],
       },
       drawTwo: {
-        entry: 'doDrawTwo',
+        entry: ['doDrawTwo', 'logDrawTwo'],
         always: 'choose',
       },
       choose: {
         on: {
           CHOOSE_CARD: {
-            actions: 'setChosen',
+            actions: ['setChosen', 'logChosen'],
             target: 'maybeTarget',
           },
         },
@@ -148,17 +209,17 @@ export function createTurnMachine(initialContext: TurnContext) {
         on: {
           SELECT_TARGET: {
             guard: 'targetValid',
-            actions: 'setTarget',
+            actions: ['setTarget', 'logTarget'],
             target: 'resolve',
           },
         },
       },
       resolve: {
-        entry: 'applyCardEffect',
+        entry: ['applyCardEffect', 'logEffect'],
         always: 'checkWin',
       },
       checkWin: {
-        entry: 'applyWinCheck',
+        entry: ['applyWinCheck', 'logWinCheck'],
         always: 'endTurn',
       },
       endTurn: {

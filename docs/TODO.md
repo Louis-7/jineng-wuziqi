@@ -43,9 +43,9 @@
 
 ## 7) Turn FSM (XState)
 
-- [] Phases: drawTwo → choose → selectTarget → resolve → checkWin → endTurn
-- [] Guards: target legality/empty-check; freeze skip logic
-- [] Event log and state serialization (for replay/networking)
+- [x] Phases: drawTwo → choose → selectTarget → resolve → checkWin → endTurn
+- [x] Guards: target legality/empty-check; freeze skip logic
+- [x] Event log and state serialization (for replay/networking)
 
 ## 8) UI components
 

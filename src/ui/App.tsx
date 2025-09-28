@@ -36,7 +36,7 @@ export default function App() {
             onCellClick={(p) => {
               selectCell(p);
             }}
-            isCellEnabled={(_p, val) => needsTarget && val === 0}
+            isCellEnabled={(_p, val) => !game.winner && needsTarget && val === 0}
           />
         </section>
 
@@ -51,6 +51,7 @@ export default function App() {
               chosen={chosen}
               onChoose={chooseCard}
               needsTarget={needsTarget}
+              disabled={Boolean(game.winner)}
             />
           </div>
         </aside>

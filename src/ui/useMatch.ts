@@ -57,6 +57,22 @@ export function useMatch(opts: MatchOptions = {}) {
 
   const startNewTurn = useCallback(
     (g: GameState) => {
+      // If the game already has a winner, do not start a new turn.
+      if (g.winner) {
+        if (actorRef.current) {
+          try {
+            actorRef.current.stop();
+          } catch {
+            // ignore
+          }
+        }
+        actorRef.current = null;
+        setDrawn([]);
+        setChosen(undefined);
+        setNeedsTarget(false);
+        return;
+      }
+
       // dispose previous
       if (actorRef.current) {
         try {
@@ -86,6 +102,8 @@ export function useMatch(opts: MatchOptions = {}) {
   // After each turn finishes, snapshot game and reset interim UI state
   const chooseCard = useCallback(
     (cardId: string) => {
+      // Ignore interactions once the game is finished
+      if (game.winner) return;
       const actor = actorRef.current;
       if (!actor) return;
       actor.send({ type: 'CHOOSE_CARD', cardId });
@@ -98,14 +116,29 @@ export function useMatch(opts: MatchOptions = {}) {
         setGame(next);
         const win = checkWinFromLastMove(next.board);
         setWinningLine(win?.line);
-        startNewTurn({ ...next });
+        if (next.winner) {
+          // End of game: stop the actor and clear turn UI
+          try {
+            actor.stop();
+          } catch {
+            // ignore
+          }
+          actorRef.current = null;
+          setDrawn([]);
+          setChosen(undefined);
+          setNeedsTarget(false);
+        } else {
+          startNewTurn({ ...next });
+        }
       }
     },
-    [startNewTurn],
+    [game.winner, startNewTurn],
   );
 
   const selectCell = useCallback(
     (p: Point) => {
+      // Ignore interactions once the game is finished
+      if (game.winner) return;
       const actor = actorRef.current;
       if (!actor || !chosen) return;
       actor.send({ type: 'SELECT_TARGET', target: { kind: 'cell', point: p } });
@@ -115,10 +148,23 @@ export function useMatch(opts: MatchOptions = {}) {
         setGame(next);
         const win = checkWinFromLastMove(next.board);
         setWinningLine(win?.line);
-        startNewTurn({ ...next });
+        if (next.winner) {
+          // End of game: stop the actor and clear turn UI
+          try {
+            actor.stop();
+          } catch {
+            // ignore
+          }
+          actorRef.current = null;
+          setDrawn([]);
+          setChosen(undefined);
+          setNeedsTarget(false);
+        } else {
+          startNewTurn({ ...next });
+        }
       }
     },
-    [chosen, startNewTurn],
+    [game.winner, chosen, startNewTurn],
   );
 
   // Start first turn on mount if no drawn yet

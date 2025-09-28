@@ -115,3 +115,50 @@ export function checkWinFromLastMove(b: BoardState): WinResult | null {
 
   return null;
 }
+
+/**
+ * Scan globally for any winning lines for any player. Returns all wins found.
+ * Used for effects that may produce simultaneous wins (see Rules.md).
+ */
+export function scanAllWins(b: BoardState): WinResult[] {
+  const wins: WinResult[] = [];
+  // Directions to scan only in positive direction to avoid duplicates
+  const DIRS: Array<{ dx: number; dy: number }> = [
+    { dx: 1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: 1, dy: 1 },
+    { dx: 1, dy: -1 },
+  ];
+
+  for (let y = 0; y < b.size; y++) {
+    const row = b.cells[y];
+    if (!row) continue;
+    for (let x = 0; x < b.size; x++) {
+      const player = row[x];
+      if (player === EMPTY) continue;
+      for (const { dx, dy } of DIRS) {
+        const px = x - dx;
+        const py = y - dy;
+        // Only start counting if previous cell in direction is different or out of bounds
+        if (px >= 0 && px < b.size && py >= 0 && py < b.size) {
+          const prev = b.cells[py]?.[px];
+          if (prev === player) continue;
+        }
+        const line: Point[] = [{ x, y }];
+        let nx = x + dx;
+        let ny = y + dy;
+        while (nx >= 0 && nx < b.size && ny >= 0 && ny < b.size) {
+          const val = b.cells[ny]?.[nx];
+          if (val !== player) break;
+          line.push({ x: nx, y: ny });
+          nx += dx;
+          ny += dy;
+        }
+        if (line.length >= 5) {
+          wins.push({ player: player as Player, length: line.length, line });
+        }
+      }
+    }
+  }
+  return wins;
+}

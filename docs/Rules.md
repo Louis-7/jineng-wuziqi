@@ -6,7 +6,7 @@ This project blends classic Gomoku with a draw–play–discard card mechanic. T
 - Board: 15×15 by default (configurable).
 - Stones: Player 1 = Black (1), Player 2 = White (2).
 - Win: A contiguous line of 5 or more stones of the same color in any direction (horizontal, vertical, diagonal) immediately wins the game.
-- Simultaneous five-in-a-row (both players form five during a single effect): by default, the active player wins. This may become configurable in future versions (for example, draw or re-evaluate).
+- Simultaneous five-in-a-row: see “Simultaneous Five Policy” below.
 
 ## Turn and Deck Flow
 - Players alternate turns.
@@ -68,13 +68,24 @@ Format: Card → Target/Restrictions → Effect → Notes.
   - If both sides achieve five during this single resolution, the active player wins.
   - All randomness uses the match seed for reproducible replays and online consistency.
 
+## Simultaneous Five Policy
+When a single effect (card or action) resolves and, as a result, both players have one or more lines with length ≥ 5 at the same time, apply this policy:
+
+- Timing: Always resolve the entire effect first, then perform a global win check.
+- Default: Attacker Priority — the active player (whose turn it is / who played the card) wins.
+- Configurable: `simultaneousFivePolicy` may be set to one of:
+  - `attacker` (default): active player wins.
+  - `draw`: the game ends immediately in a draw.
+- Overlines: “≥ 5” includes 6-in-a-row or longer and still satisfies victory.
+- Typical sources: global effects such as Polarity Inversion and multi-placement effects such as Spontaneous Generation may trigger simultaneous fives; apply the policy after their full resolution.
+
 ## Additional Rules and Notes
 - Seed and reproducibility:
   - A match seed is set at start. Shuffling and random placements must use the seed-driven PRNG.
 - Interactions and invalid actions:
   - Invalid targets (placing on occupied cells, taking own stones, playing Spontaneous Generation with insufficient empty cells, etc.) must be rejected with clear feedback.
 - Configurable options (future):
-  - Board size, first player, deck composition, simultaneous-five policy, etc.
+  - Board size, first player, deck composition, simultaneous-five policy, etc. (see “Simultaneous Five Policy”).
 
 ---
 Any rule changes must update this file and state the impact in the commit message. This file is the authoritative reference for implementation and tests.

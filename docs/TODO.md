@@ -3,7 +3,7 @@
 > Use `- []` to mark pending items. You can mark them as complete after acceptance.
 
 ## 1) Product rules & docs
-- [] Finalize simultaneous-five policy and configurability
+- [x] Finalize simultaneous-five policy and configurability
 - [] Review and approve Rules.md (including three skill cards)
 - [] Add online/AI design notes in Info.md
 

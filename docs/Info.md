@@ -40,6 +40,7 @@ A web-based “Gomoku + card-draw” game with a clear modular architecture to s
 - DeckState: { drawPile: CardId[]; discardPile: CardId[] }
 - GameSettings: { boardSize; firstPlayer; deckComposition; seed }
 - GameContext: { board; currentPlayer; deck; statuses; drawnCards; winner?; lastMove?; settings }
+- Settings include `simultaneousFivePolicy`: 'attacker' | 'draw' (default 'attacker')
 
 ## Consistency & Extensibility
 - CardRegistry centralizes card registration; adding a new card only requires a new file + registry entry.
@@ -50,6 +51,7 @@ A web-based “Gomoku + card-draw” game with a clear modular architecture to s
 - Unit: win detection, draw/reshuffle, card effects/preconditions, FSM transitions
 - E2E: full match flow, invalid target feedback, the three skill cards
 - CI: Lint/Typecheck/Test/Build must pass; coverage threshold for core logic
+  - Tests must cover simultaneous-five outcomes for both policies ('attacker'/'draw') after effect resolution (e.g., Polarity Inversion, Spontaneous Generation)
 
 ## MVP Acceptance
 - Hot-seat PvP; turn flow draw 2 / play 1 / discard 1; place/take/three skills work; immediate win checks; freeze skips turns; Spontaneous Generation requires ≥5 empty cells.

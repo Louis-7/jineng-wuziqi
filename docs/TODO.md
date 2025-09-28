@@ -28,18 +28,18 @@
 
 ## 5) Card system foundation
 
-- [] Define CardDefinition/TargetSchema/error types
-- [] CardRegistry + automatic UI mapping (icon/description)
-- [] Target selector (empty cell/opponent stone/player), common highlight and validation
+- [x] Define CardDefinition/TargetSchema/error types
+- [x] CardRegistry + automatic UI mapping (icon/description)
+- [x] Target selector (empty cell/opponent stone/player), common highlight and validation
 
 ## 6) MVP card implementations
 
-- [] Place: only empty cell allowed + error feedback
-- [] Take: only opponent stones allowed
-- [] Polarity Inversion: global swap + win check
-- [] Time Freeze: skipNextTurns stack and consume
-- [] Spontaneous Generation: requires ≥5 empties + random 5 + win check
-- [] Unit tests: all above cards
+- [x] Place: only empty cell allowed + error feedback
+- [x] Take: only opponent stones allowed
+- [x] Polarity Inversion: global swap + win check
+- [x] Time Freeze: skipNextTurns stack and consume
+- [x] Spontaneous Generation: requires ≥5 empties + random 5 + win check
+- [x] Unit tests: all above cards
 
 ## 7) Turn FSM (XState)
 

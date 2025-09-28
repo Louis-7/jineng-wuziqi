@@ -5,7 +5,6 @@ import {
   PlaceCard,
   TakeCard,
   PolarityInversionCard,
-  TimeFreezeCard,
   SpontaneousGenerationCard,
   type MatchContext,
 } from '../domain/cards';
@@ -47,15 +46,7 @@ describe('Base Cards — domain outputs', () => {
     expect(eff.ops[0]).toEqual({ type: 'swapAll' });
   });
 
-  it('Time Freeze: targets opponent and yields freeze op', () => {
-    const c = ctx(5, 1);
-    const valid = TimeFreezeCard.validateTarget(c, { kind: 'player', player: 2 });
-    expect(valid.ok).toBe(true);
-    if (valid.ok) {
-      const eff = TimeFreezeCard.effect(c, createPrng(1), valid.value);
-      expect(eff.ops[0]).toEqual({ type: 'freeze', target: 2, amount: 1 });
-    }
-  });
+  // Time Freeze card removed.
 
   it('Spontaneous Generation: requires 5 empties, yields 5 place ops with seeded randomness', () => {
     const c = ctx(3); // 3x3 has 9 cells

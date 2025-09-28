@@ -5,6 +5,7 @@ import { createTurnMachine } from '../domain/fsm/machine';
 import { CardRegistry } from '../domain/cards/registry';
 import { registerDefaultBaseCards } from '../domain/cards/baseCards';
 import type { GameState, SimultaneousFivePolicy } from '../domain/engine';
+import type { MatchContext } from '../domain/cards';
 import { createActor } from 'xstate';
 
 export interface MatchOptions {
@@ -29,10 +30,22 @@ export function useMatch(opts: MatchOptions = {}) {
       'Take',
       'Take',
       'PolarityInversion',
-      'TimeFreeze',
       'SpontaneousGeneration',
     ];
-    return prng.shuffle([...pool]);
+    const shuffled = prng.shuffle([...pool]);
+    // Guarantee at least one Place in the very first draw of 2 cards.
+    // draw() pops from the end, so ensure one 'Place' sits at the last index.
+    const idx = shuffled.indexOf('Place');
+    if (idx !== -1) {
+      const last = shuffled.length - 1;
+      const a = shuffled[idx];
+      const b = shuffled[last];
+      if (a !== undefined && b !== undefined) {
+        shuffled[idx] = b;
+        shuffled[last] = a;
+      }
+    }
+    return shuffled;
   }
 
   const registry = useMemo(() => {
@@ -116,11 +129,12 @@ export function useMatch(opts: MatchOptions = {}) {
       const actor = actorRef.current;
       if (!actor) return;
       actor.send({ type: 'CHOOSE_CARD', cardId });
+      // No player-targeting cards currently; selection proceeds as normal for cell-target cards.
       const snap = actor.getSnapshot();
       setChosen(cardId);
       const needs = snap.value === 'selectTarget';
       setNeedsTarget(needs);
-      if (!needs && snap.status === 'done') {
+      if (snap.status === 'done') {
         const next = snap.context.game;
         setGame(next);
         const win = checkWinFromLastMove(next.board);
@@ -234,6 +248,19 @@ export function useMatch(opts: MatchOptions = {}) {
     registryMeta,
     resetMatch,
     currentOptions: optionsRef.current,
+    // Domain-aware cell enablement: only enable clicks that the chosen card would accept
+    isCellEnabled: (p: Point) => {
+      if (!chosen || !needsTarget) return false;
+      const def = registry.require(chosen);
+      if (def.target.kind !== 'cell') return false;
+      const mc: MatchContext = {
+        board: game.board,
+        currentPlayer: game.currentPlayer,
+        skipNextTurns: game.status.skipNextTurns,
+      };
+      const res = def.validateTarget(mc, { kind: 'cell', point: p } as never);
+      return res.ok;
+    },
   } as const;
 }
 

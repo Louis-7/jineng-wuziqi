@@ -18,6 +18,7 @@ export default function App() {
     registryMeta,
     resetMatch,
     currentOptions,
+    isCellEnabled,
   } = useMatch({
     boardSize: 15,
     firstPlayer: 1,
@@ -61,7 +62,7 @@ export default function App() {
             onCellClick={(p) => {
               selectCell(p);
             }}
-            isCellEnabled={(_p, val) => !game.winner && needsTarget && val === 0}
+            isCellEnabled={(p, val) => !game.winner && needsTarget && isCellEnabled(p, val)}
           />
         </section>
 

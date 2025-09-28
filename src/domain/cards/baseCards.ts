@@ -1,7 +1,7 @@
 import type { PRNG } from '../rng';
 import { EMPTY, type BoardState, type Player, type Point } from '../board';
 import type { CardDefinition, EffectOutput, MatchContext, Result } from './types';
-import { canPlayByTargetSpec, validateCellTarget, validatePlayerTarget } from './validate';
+import { canPlayByTargetSpec, validateCellTarget } from './validate';
 import { DefaultCardRegistry } from './registry';
 
 function countEmpties(b: BoardState): number {
@@ -79,22 +79,7 @@ export const PolarityInversionCard: CardDefinition<{ kind: 'none' }> = {
 };
 
 // 4) Time Freeze
-export const TimeFreezeCard: CardDefinition<{ kind: 'player'; player: Player }> = {
-  id: 'TimeFreeze',
-  meta: {
-    name: 'Time Freeze',
-    description: 'Opponent skips their next turn.',
-    icon: '🕒',
-  },
-  target: { kind: 'player', relation: 'opponent' },
-  canPlay: () => ({ ok: true, value: undefined }),
-  validateTarget: (ctx, t) =>
-    validatePlayerTarget(ctx, { kind: 'player', relation: 'opponent' }, t),
-  effect: (_ctx, _rng, target) => ({
-    ops: [{ type: 'freeze' as const, target: target.player, amount: 1 }],
-    log: 'Freeze 1',
-  }),
-};
+// (Removed) Time Freeze: was a card to skip opponent's next turn.
 
 // 5) Spontaneous Generation
 export const SpontaneousGenerationCard: CardDefinition<{ kind: 'none' }> = {
@@ -134,6 +119,5 @@ export function registerDefaultBaseCards(
   reg.register(PlaceCard);
   reg.register(TakeCard);
   reg.register(PolarityInversionCard);
-  reg.register(TimeFreezeCard);
   reg.register(SpontaneousGenerationCard);
 }

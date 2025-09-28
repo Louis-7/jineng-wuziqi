@@ -24,12 +24,12 @@ export function TurnPanel({
     <div className="space-y-2">
       <div className="text-sm font-medium">Drawn</div>
       <div className="flex gap-2">
-        {drawn.map((id) => {
+        {drawn.map((id, i) => {
           const meta = registryMeta[id] ?? { name: id, description: id };
           const isChosen = id === chosen;
           return (
             <button
-              key={id}
+              key={id + '-' + String(i)}
               onClick={() => {
                 if (!disabled) onChoose(id);
               }}

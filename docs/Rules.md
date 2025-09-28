@@ -4,7 +4,7 @@ This project blends classic Gomoku with a draw–play–discard card mechanic. T
 
 ## Board and Victory
 
-- Board: 15×15 by default (configurable).
+- Board: 15×15 by default (configurable). The board is a grid of horizontal and vertical lines; stones are placed on the intersections (not inside squares).
 - Stones: Player 1 = Black (1), Player 2 = White (2).
 - Win: A contiguous line of 5 or more stones of the same color in any direction (horizontal, vertical, diagonal) immediately wins the game.
 - Simultaneous five-in-a-row: see “Simultaneous Five Policy” below.
@@ -31,12 +31,12 @@ Format: Card → Target/Restrictions → Effect → Notes.
 ### 1) Place Stone
 
 - Target/Restrictions:
-  - Must select an empty board cell.
+  - Must select an empty intersection on the board (i.e., a grid line crossing).
 - Effect:
-  - Place one stone of the current player on that cell.
+  - Place one stone of the current player at that intersection.
 - Notes:
   - Immediately triggers a win check after resolution.
-  - Illegal target: selecting an occupied cell must be rejected (UI should disable; engine must validate and refuse the action).
+  - Illegal target: selecting an occupied intersection must be rejected (UI should disable; engine must validate and refuse the action).
 
 ### 2) Take Stone
 

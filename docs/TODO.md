@@ -22,9 +22,9 @@
 
 ## 4) Board & win detection
 
-- [] Board data structure and place/remove APIs
-- [] Four-direction scan from last move (h/v/diag)
-- [] Unit tests: edges, ≥5-in-row, avoid double-counting
+- [x] Board data structure and place/remove APIs
+- [x]Four-direction scan from last move (h/v/diag)
+- [x] Unit tests: edges, ≥5-in-row, avoid double-counting
 
 ## 5) Card system foundation
 

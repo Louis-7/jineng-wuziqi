@@ -62,7 +62,7 @@ export default function App() {
             onCellClick={(p) => {
               selectCell(p);
             }}
-            isCellEnabled={(p, val) => !game.winner && needsTarget && isCellEnabled(p, val)}
+            isCellEnabled={(p) => !game.winner && needsTarget && isCellEnabled(p)}
           />
         </section>
 

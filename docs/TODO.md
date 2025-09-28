@@ -16,9 +16,9 @@
 
 ## 3) RNG & deck
 
-- [] Implement seedable PRNG and Fisher–Yates shuffle
-- [] Deck: draw/discard/reshuffle, including mid-draw reshuffle
-- [] Unit tests: determinism by seed, reshuffle-on-empty
+- [x] Implement seedable PRNG and Fisher–Yates shuffle
+- [x] Deck: draw/discard/reshuffle, including mid-draw reshuffle
+- [x] Unit tests: determinism by seed, reshuffle-on-empty
 
 ## 4) Board & win detection
 

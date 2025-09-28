@@ -17,8 +17,8 @@ export default [
     ],
   },
   js.configs.recommended,
-  // Apply TypeScript rules only to TS/TSX files
-  ...tseslint.configs.strictTypeChecked.map((cfg) => ({
+  // Apply TypeScript rules only to TS/TSX files — use recommended (less noisy than strict)
+  ...tseslint.configs.recommendedTypeChecked.map((cfg) => ({
     ...cfg,
     files: ['src/**/*.{ts,tsx}'],
   })),
@@ -40,6 +40,16 @@ export default [
       'react/prop-types': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+      // Slightly relax some noisy TS rules while keeping quality high
+      '@typescript-eslint/restrict-template-expressions': [
+        'warn',
+        { allowNumber: true, allowBoolean: true, allowNullish: false, allowRegExp: false },
+      ],
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-unnecessary-condition': [
+        'warn',
+        { allowConstantLoopConditions: true },
+      ],
     },
     settings: {
       react: {

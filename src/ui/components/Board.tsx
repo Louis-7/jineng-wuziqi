@@ -8,8 +8,6 @@ export interface BoardProps {
   onCellClick?: (p: Point) => void;
   /** Optional predicate to enable/disable cell clickability */
   isCellEnabled?: (p: Point, value: CellValue) => boolean;
-  /** Show coordinate labels around the board */
-  showCoords?: boolean;
   /** Show star points (hoshi) for typical sizes like 15×15 */
   showStar?: boolean;
 }
@@ -25,15 +23,12 @@ export function Board({
   winningLine,
   onCellClick,
   isCellEnabled,
-  showCoords = true,
   showStar = true,
 }: BoardProps) {
   const size = board.size;
   const tilePercent = `${String(100 / size)}%`;
   const DOT_BASE = 'w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6';
-  // Label helpers
-  const colLabel = (x: number): string => String.fromCharCode('A'.charCodeAt(0) + x);
-  const rowLabel = (y: number): string => String(y + 1);
+  // coordinate labels removed for now
 
   // Star (hoshi) points: for 15×15 show 5 points (center + 4 near-corner), otherwise none
   const starPoints: Point[] = [];
@@ -58,12 +53,14 @@ export function Board({
         {/* continuous grid lines as a background layer inside padded area */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0 border border-stone-300 z-0"
           style={{
             backgroundImage:
               'linear-gradient(to right, #d6d3d1 1px, transparent 1px), linear-gradient(to bottom, #d6d3d1 1px, transparent 1px)',
             backgroundSize: `${tilePercent} 100%, 100% ${tilePercent}`,
             backgroundRepeat: 'repeat, repeat',
+            // Shift the first vertical/horizontal grid lines one pixel to avoid overlapping the top/left border
+            backgroundPosition: '1px 0, 0 1px',
           }}
         />
         {/* star points */}
@@ -143,42 +140,6 @@ export function Board({
           }),
         )}
       </div>
-
-      {/* coordinate labels */}
-      {showCoords && (
-        <>
-          {/* column labels (top) */}
-          {Array.from({ length: size }).map((_, x) => (
-            <div
-              key={`col-${String(x)}`}
-              aria-hidden
-              className="absolute text-[10px] md:text-xs text-stone-600"
-              style={{
-                left: `calc(${String((x / size) * 100)}% + 0px)`,
-                top: '6px',
-                transform: 'translate(-50%, -100%)',
-              }}
-            >
-              {colLabel(x)}
-            </div>
-          ))}
-          {/* row labels (left) */}
-          {Array.from({ length: size }).map((_, y) => (
-            <div
-              key={`row-${String(y)}`}
-              aria-hidden
-              className="absolute text-[10px] md:text-xs text-stone-600"
-              style={{
-                left: '6px',
-                top: `calc(${String((y / size) * 100)}% + 0px)`,
-                transform: 'translate(-100%, -50%)',
-              }}
-            >
-              {rowLabel(y)}
-            </div>
-          ))}
-        </>
-      )}
     </div>
   );
 }

@@ -1,17 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Board } from './components/Board';
 import { StatusBar } from './components/StatusBar';
 import { TurnPanel } from './components/TurnPanel';
-import { useMatch } from './useMatch';
+import { useMatch, type MatchOptions } from './useMatch';
+import { NewMatchModal } from './components/modals/NewMatchModal';
+import { HelpModal } from './components/modals/HelpModal';
 
 export default function App() {
-  const { game, drawn, chosen, needsTarget, winningLine, selectCell, chooseCard, registryMeta } =
-    useMatch({
-      boardSize: 15,
-      firstPlayer: 1,
-      seed: 'demo',
-      policy: 'attacker',
-    });
+  const {
+    game,
+    drawn,
+    chosen,
+    needsTarget,
+    winningLine,
+    selectCell,
+    chooseCard,
+    registryMeta,
+    resetMatch,
+    currentOptions,
+  } = useMatch({
+    boardSize: 15,
+    firstPlayer: 1,
+    seed: 'demo',
+    policy: 'attacker',
+  });
+
+  const [showNewMatch, setShowNewMatch] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   return (
     <div className="min-h-full p-6">
@@ -22,8 +37,18 @@ export default function App() {
         </div>
         {/* Placeholder for Modals (new match, help) */}
         <div className="flex gap-2">
-          <button className="text-sm px-3 py-1.5 rounded border border-stone-300">New Match</button>
-          <button className="text-sm px-3 py-1.5 rounded border border-stone-300">Help</button>
+          <button
+            className="text-sm px-3 py-1.5 rounded border border-stone-300"
+            onClick={() => setShowNewMatch(true)}
+          >
+            New Match
+          </button>
+          <button
+            className="text-sm px-3 py-1.5 rounded border border-stone-300"
+            onClick={() => setShowHelp(true)}
+          >
+            Help
+          </button>
         </div>
       </header>
 
@@ -56,6 +81,23 @@ export default function App() {
           </div>
         </aside>
       </main>
+
+      <NewMatchModal
+        open={showNewMatch}
+        onClose={() => setShowNewMatch(false)}
+        onStart={(opts: MatchOptions) => {
+          resetMatch(opts);
+          setShowNewMatch(false);
+        }}
+        defaults={{
+          boardSize: currentOptions.boardSize,
+          firstPlayer: currentOptions.firstPlayer,
+          seed: String(currentOptions.seed),
+          policy: currentOptions.policy,
+        }}
+      />
+
+      <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );
 }

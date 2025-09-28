@@ -52,7 +52,7 @@
 - [x] Board/Cell: responsive, last-move highlight, winning line
 - [x] CardChoice/TurnPanel: play/discard, target guidance
 - [x] StatusBar: current player, deck/discard counters, freeze notice
-- [ ] Modals: new match (settings/composition/seed), help (rules)
+- [x] Modals: New Match (seed randomized on open; deck generated from seed; board size/first player hidden), Help (rules)
 - [x] Basic a11y (keyboard/ARIA/contrast)
 
 ## 9) Settings & persistence

@@ -12,8 +12,6 @@ export interface MatchOptions {
   firstPlayer?: Player;
   seed?: string | number;
   policy?: SimultaneousFivePolicy;
-  /** Initial deck composition (top at end of array to align with pop()) */
-  deck?: string[];
 }
 
 export function useMatch(opts: MatchOptions = {}) {
@@ -21,16 +19,21 @@ export function useMatch(opts: MatchOptions = {}) {
   const firstPlayer = opts.firstPlayer ?? 1;
   const seed = opts.seed ?? 'demo';
   const policy = opts.policy ?? 'attacker';
-  const initialDeck = opts.deck ?? [
-    'Place',
-    'Take',
-    'PolarityInversion',
-    'TimeFreeze',
-    'SpontaneousGeneration',
-    'Place',
-    'Place',
-    'Take',
-  ];
+  // Simple deterministic deck generator from seed and registered cards
+  function generateDeck(prng: PRNG): string[] {
+    // For MVP: fixed multiset then shuffle with PRNG
+    const pool = [
+      'Place',
+      'Place',
+      'Place',
+      'Take',
+      'Take',
+      'PolarityInversion',
+      'TimeFreeze',
+      'SpontaneousGeneration',
+    ];
+    return prng.shuffle([...pool]);
+  }
 
   const registry = useMemo(() => {
     // Clone a fresh registry
@@ -40,10 +43,16 @@ export function useMatch(opts: MatchOptions = {}) {
   }, []);
 
   const rngRef = useRef<PRNG>(createPrng(seed));
+  const optionsRef = useRef<Required<MatchOptions>>({
+    boardSize,
+    firstPlayer,
+    seed,
+    policy,
+  });
   const [game, setGame] = useState<GameState>(() => ({
     board: createBoard(boardSize),
     currentPlayer: firstPlayer,
-    deck: { drawPile: [...initialDeck], discardPile: [] },
+    deck: { drawPile: generateDeck(rngRef.current), discardPile: [] },
     status: { skipNextTurns: {} },
   }));
 
@@ -175,6 +184,45 @@ export function useMatch(opts: MatchOptions = {}) {
 
   const registryMeta = useMemo(() => registry.getMetaMap(), [registry]);
 
+  const resetMatch = useCallback(
+    (newOpts: MatchOptions) => {
+      // Merge with current options
+      const merged = {
+        boardSize: newOpts.boardSize ?? optionsRef.current.boardSize,
+        firstPlayer: newOpts.firstPlayer ?? optionsRef.current.firstPlayer,
+        seed: newOpts.seed ?? optionsRef.current.seed,
+        policy: newOpts.policy ?? optionsRef.current.policy,
+      } as Required<MatchOptions>;
+
+      // Stop any running actor
+      if (actorRef.current) {
+        try {
+          actorRef.current.stop();
+        } catch {
+          // ignore
+        }
+      }
+      actorRef.current = null;
+
+      // Recreate RNG and game
+      rngRef.current = createPrng(merged.seed);
+      const g: GameState = {
+        board: createBoard(merged.boardSize),
+        currentPlayer: merged.firstPlayer,
+        deck: { drawPile: generateDeck(rngRef.current), discardPile: [] },
+        status: { skipNextTurns: {} },
+      };
+      optionsRef.current = merged;
+      setGame(g);
+      setWinningLine(undefined);
+      setDrawn([]);
+      setChosen(undefined);
+      setNeedsTarget(false);
+      startNewTurn(g);
+    },
+    [startNewTurn],
+  );
+
   return {
     game,
     drawn,
@@ -184,6 +232,8 @@ export function useMatch(opts: MatchOptions = {}) {
     selectCell,
     chooseCard,
     registryMeta,
+    resetMatch,
+    currentOptions: optionsRef.current,
   } as const;
 }
 

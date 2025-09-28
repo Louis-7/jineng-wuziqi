@@ -3,6 +3,7 @@
 A web-based “Gomoku + card-draw” game with a clear modular architecture to support future online PvP and Player vs CPU, and deterministic rules (seeded RNG) for reproducibility.
 
 ## Tech Stack
+
 - Frontend: React + TypeScript + Vite
 - State/Flow: XState (FSM) + Immer (immutable updates)
 - Styling: Tailwind CSS (CSS Grid for board)
@@ -14,6 +15,7 @@ A web-based “Gomoku + card-draw” game with a clear modular architecture to s
   - AI: BotStrategy interface (decideTurn)
 
 ## Architecture
+
 - domain (pure TS, no UI/network)
   - board: board ops and win detection
   - rng: seeded random/shuffle
@@ -32,6 +34,7 @@ A web-based “Gomoku + card-draw” game with a clear modular architecture to s
   - BotStrategy: decideTurn(state, cards, rng)
 
 ## Data Model (summary)
+
 - Board: number[][] (0 empty, 1 black, 2 white)
 - Cell: { x: number; y: number }
 - Player: 1 | 2
@@ -43,6 +46,7 @@ A web-based “Gomoku + card-draw” game with a clear modular architecture to s
 - Settings include `simultaneousFivePolicy`: 'attacker' | 'draw' (default 'attacker')
 
 ## Consistency & Extensibility
+
 - CardRegistry centralizes card registration; adding a new card only requires a new file + registry entry.
 - All randomness uses the match seed for reproducibility and online consistency.
 - Command/Event pattern facilitates networking and replay.

@@ -1,7 +1,8 @@
 ---
-applyTo: "**/*.ts,**/*.tsx"
-description: "React+TS+Vite+XState+Tailwind code generation guidance"
+applyTo: '**/*.ts,**/*.tsx'
+description: 'React+TS+Vite+XState+Tailwind code generation guidance'
 ---
+
 # Copilot Guidance: React + TypeScript + Vite + XState + Tailwind
 
 - Enable strict TypeScript; avoid `any`; prefer `unknown` with narrowing when needed.

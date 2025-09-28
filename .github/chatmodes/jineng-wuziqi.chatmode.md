@@ -1,7 +1,8 @@
 ---
-description: "Specialized mode for the Jineng Wuziqi project to keep architecture and style consistent."
-model: "gpt-5"
+description: 'Specialized mode for the Jineng Wuziqi project to keep architecture and style consistent.'
+model: 'gpt-5'
 ---
+
 # Jineng Wuziqi — Project Chat Mode
 
 You are contributing to a React + TypeScript + Vite Gomoku (card edition) project.

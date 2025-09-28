@@ -39,8 +39,20 @@ export function createTurnMachine(initialContext: TurnContext) {
       events: {} as TurnEvent,
     },
     actions: {
-      doDrawTwo: assign({
-        drawn: ({ context }) => drawCards(context.game.deck, 2, context.rng),
+      doDrawTwo: assign(({ context }) => {
+        // Avoid mutating the deck stored in XState context directly; use a copy.
+        const deckCopy = {
+          drawPile: [...context.game.deck.drawPile],
+          discardPile: [...context.game.deck.discardPile],
+        };
+        const drawn = drawCards(deckCopy, 2, context.rng);
+        return {
+          drawn,
+          game: {
+            ...context.game,
+            deck: deckCopy,
+          },
+        };
       }),
       logDrawTwo: assign({
         logs: ({ context }) => {

@@ -1,14 +1,59 @@
+import React from 'react';
+import { Board } from './components/Board';
+import { StatusBar } from './components/StatusBar';
+import { TurnPanel } from './components/TurnPanel';
+import { useMatch } from './useMatch';
+
 export default function App() {
+  const { game, drawn, chosen, needsTarget, winningLine, selectCell, chooseCard, registryMeta } =
+    useMatch({
+      boardSize: 15,
+      firstPlayer: 1,
+      seed: 'demo',
+      policy: 'attacker',
+    });
+
   return (
     <div className="min-h-full p-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold">Jineng Wuziqi</h1>
-        <p className="text-sm text-gray-600">React + TS + Vite scaffold</p>
-      </header>
-      <main>
-        <div className="rounded-md border border-gray-200 bg-white p-4 shadow-sm">
-          <p>Welcome! Project scaffolding is ready.</p>
+      <header className="mb-6 flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Jineng Wuziqi</h1>
+          <p className="text-sm text-gray-600">Gomoku + Cards (MVP demo)</p>
         </div>
+        {/* Placeholder for Modals (new match, help) */}
+        <div className="flex gap-2">
+          <button className="text-sm px-3 py-1.5 rounded border border-stone-300">New Match</button>
+          <button className="text-sm px-3 py-1.5 rounded border border-stone-300">Help</button>
+        </div>
+      </header>
+
+      <main className="grid grid-cols-1 lg:grid-cols-[auto,1fr] gap-6 items-start">
+        <section className="justify-self-center">
+          <Board
+            board={game.board}
+            lastMove={game.board.lastMove}
+            winningLine={winningLine}
+            onCellClick={(p) => {
+              selectCell(p);
+            }}
+            isCellEnabled={(_p, val) => needsTarget && val === 0}
+          />
+        </section>
+
+        <aside className="space-y-4">
+          <div className="rounded-md border border-gray-200 bg-white p-4 shadow-sm">
+            <StatusBar game={game} />
+          </div>
+          <div className="rounded-md border border-gray-200 bg-white p-4 shadow-sm">
+            <TurnPanel
+              drawn={drawn}
+              registryMeta={registryMeta}
+              chosen={chosen}
+              onChoose={chooseCard}
+              needsTarget={needsTarget}
+            />
+          </div>
+        </aside>
       </main>
     </div>
   );

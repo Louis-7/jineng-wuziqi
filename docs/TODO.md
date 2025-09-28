@@ -49,11 +49,11 @@
 
 ## 8) UI components
 
-- [] Board/Cell: responsive, last-move highlight, winning line
-- [] CardChoice/TurnPanel: play/discard, target guidance
-- [] StatusBar: current player, deck/discard counters, freeze notice
-- [] Modals: new match (settings/composition/seed), help (rules)
-- [] Basic a11y (keyboard/ARIA/contrast)
+- [x] Board/Cell: responsive, last-move highlight, winning line
+- [x] CardChoice/TurnPanel: play/discard, target guidance
+- [x] StatusBar: current player, deck/discard counters, freeze notice
+- [ ] Modals: new match (settings/composition/seed), help (rules)
+- [x] Basic a11y (keyboard/ARIA/contrast)
 
 ## 9) Settings & persistence
 

@@ -67,12 +67,33 @@ describe('HeuristicBot strategy (Hard)', () => {
     registerDefaultBaseCards(reg);
     const decision = HeuristicBot.decide(g, ['Take', 'PolarityInversion'], reg, createPrng('t3'));
     expect(decision.cardId).toBe('Take');
-    expect(decision.explanation).toMatch(/Defensive take/i);
+    expect(decision.explanation).toMatch(/Take to break lethal/i);
     const target = decision.target;
     if (!target || target.kind !== 'cell') throw new Error('expected cell target');
     const pt = target.point;
     expect([0, 1, 2, 3]).toContain(pt.x);
     expect(pt.y).toBe(2);
+  });
+
+  it('prefers polarity inversion when board swap is advantageous', () => {
+    const g = baseGame();
+    g.currentPlayer = 2;
+    // Player 1 controls strong formation; swap would hand it to player 2
+    place(g.board, { x: 3, y: 3 }, 1);
+    place(g.board, { x: 4, y: 3 }, 1);
+    place(g.board, { x: 5, y: 3 }, 1);
+    place(g.board, { x: 6, y: 3 }, 1);
+    place(g.board, { x: 7, y: 3 }, 1);
+    const reg = new CardRegistry();
+    registerDefaultBaseCards(reg);
+    const decision = HeuristicBot.decide(
+      g,
+      ['PolarityInversion', 'SpontaneousGeneration'],
+      reg,
+      createPrng('t5'),
+    );
+    expect(decision.cardId).toBe('PolarityInversion');
+    expect(decision.explanation).toMatch(/Invert polarity/i);
   });
 
   it('falls back to heuristic place when no wins/threats', () => {

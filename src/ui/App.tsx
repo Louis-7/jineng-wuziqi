@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Board } from './components/Board';
 import { StatusBar } from './components/StatusBar';
 import { TurnPanel } from './components/TurnPanel';
 import { useMatch, type MatchOptions } from './useMatch';
 import { NewMatchModal } from './components/modals/NewMatchModal';
 import { HelpModal } from './components/modals/HelpModal';
+import { SettingsModal, type BoardTheme } from './components/modals/SettingsModal';
 
 export default function App() {
   const {
@@ -28,6 +29,23 @@ export default function App() {
 
   const [showNewMatch, setShowNewMatch] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [boardTheme, setBoardTheme] = useState<BoardTheme>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem('boardTheme');
+      if (stored === 'modern' || stored === 'classic') return stored;
+    }
+    return 'modern';
+  });
+
+  // Persist theme
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('boardTheme', boardTheme);
+    } catch {
+      // ignore quota errors
+    }
+  }, [boardTheme]);
 
   return (
     <div className="min-h-full p-6">
@@ -43,6 +61,12 @@ export default function App() {
             onClick={() => setShowNewMatch(true)}
           >
             New Match
+          </button>
+          <button
+            className="text-sm px-3 py-1.5 rounded border border-stone-300"
+            onClick={() => setShowSettings(true)}
+          >
+            Settings
           </button>
           <button
             className="text-sm px-3 py-1.5 rounded border border-stone-300"
@@ -63,6 +87,7 @@ export default function App() {
               selectCell(p);
             }}
             isCellEnabled={(p) => !game.winner && needsTarget && isCellEnabled(p)}
+            theme={boardTheme}
           />
         </section>
 
@@ -99,6 +124,12 @@ export default function App() {
       />
 
       <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
+      <SettingsModal
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        theme={boardTheme}
+        onChangeTheme={(t) => setBoardTheme(t)}
+      />
     </div>
   );
 }

@@ -10,6 +10,8 @@ export interface BoardProps {
   isCellEnabled?: (p: Point, value: CellValue) => boolean;
   /** Show star points (hoshi) for typical sizes like 15×15 */
   showStar?: boolean;
+  /** Visual theme for board rendering */
+  theme?: 'modern' | 'classic';
 }
 
 /**
@@ -26,6 +28,7 @@ export function Board({
   onCellClick,
   isCellEnabled,
   showStar = true,
+  theme = 'modern',
 }: BoardProps) {
   const size = board.size;
 
@@ -48,6 +51,22 @@ export function Board({
   // We pad by 0.5 to leave room for stroke width at the outer border
   const viewBox = useMemo(() => '-0.5 -0.5 ' + String(size) + ' ' + String(size), [size]);
 
+  // Theme palette (kept internal; pure function of theme string)
+  const palette =
+    theme === 'classic'
+      ? {
+          boardFill: '#d6b38a', // light wood
+          boardStroke: '#8b5e34',
+          grid: '#8b5e34',
+          star: '#5b3a17',
+        }
+      : {
+          boardFill: '#f5f5f4',
+          boardStroke: '#d6d3d1',
+          grid: '#d6d3d1',
+          star: '#6b7280',
+        };
+
   return (
     <div className="relative inline-block">
       <div role="grid" aria-label={'Gomoku board ' + String(size) + ' by ' + String(size)}>
@@ -55,14 +74,28 @@ export function Board({
           className="block select-none w-[360px] h-[360px] md:w-[480px] md:h-[480px] lg:w-[600px] lg:h-[600px]"
           viewBox={viewBox}
         >
+          {theme === 'classic' && (
+            <defs>
+              <radialGradient id="stone-black-grad" cx="35%" cy="35%" r="65%">
+                <stop offset="0%" stopColor="#4a4a4a" />
+                <stop offset="60%" stopColor="#101010" />
+                <stop offset="100%" stopColor="#000000" />
+              </radialGradient>
+              <radialGradient id="stone-white-grad" cx="35%" cy="35%" r="70%">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="70%" stopColor="#dddddd" />
+                <stop offset="100%" stopColor="#cfcfcf" />
+              </radialGradient>
+            </defs>
+          )}
           {/* board background + border */}
           <rect
             x={-0.5}
             y={-0.5}
             width={size - 1 + 1}
             height={size - 1 + 1}
-            fill="#f5f5f4"
-            stroke="#d6d3d1"
+            fill={palette.boardFill}
+            stroke={palette.boardStroke}
             strokeWidth={0.06}
           />
 
@@ -74,7 +107,7 @@ export function Board({
               y1={i}
               x2={size - 1}
               y2={i}
-              stroke="#d6d3d1"
+              stroke={palette.grid}
               strokeWidth={0.04}
             />
           ))}
@@ -85,7 +118,7 @@ export function Board({
               y1={0}
               x2={i}
               y2={size - 1}
-              stroke="#d6d3d1"
+              stroke={palette.grid}
               strokeWidth={0.04}
             />
           ))}
@@ -97,7 +130,7 @@ export function Board({
               cx={s.x}
               cy={s.y}
               r={0.08}
-              fill="#6b7280"
+              fill={palette.star}
             />
           ))}
 
@@ -118,11 +151,27 @@ export function Board({
             row.map((val, x) => {
               if (val === 0) return null;
               const isLast = lastMove && lastMove.x === x && lastMove.y === y;
-              const fill = val === 1 ? '#0c0a09' : '#ffffff';
-              const stroke = val === 1 ? 'none' : '#a8a29e';
+              const isP1 = val === 1;
+              const baseFill =
+                theme === 'classic'
+                  ? isP1
+                    ? 'url(#stone-black-grad)'
+                    : 'url(#stone-white-grad)'
+                  : isP1
+                    ? '#0c0a09'
+                    : '#ffffff';
+              const stroke =
+                theme === 'classic' ? (isP1 ? '#000000' : '#b5b5b5') : isP1 ? 'none' : '#a8a29e';
               return (
                 <g key={'stone-' + String(x) + '-' + String(y)}>
-                  <circle cx={x} cy={y} r={0.38} fill={fill} stroke={stroke} strokeWidth={0.04} />
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={0.38}
+                    fill={baseFill}
+                    stroke={stroke}
+                    strokeWidth={0.04}
+                  />
                   {isLast && (
                     <circle
                       cx={x}

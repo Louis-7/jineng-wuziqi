@@ -368,7 +368,13 @@ function chooseBest(plans: CardPlan[], ctx: PlannerContext): BotDecision {
     };
   }
   plans.sort((a, b) => b.score - a.score);
-  return plans[0]!;
+  const best = plans[0];
+  if (best) return best;
+  const idx = ctx.drawn.length > 0 ? ctx.rng.int(0, ctx.drawn.length - 1) : 0;
+  return {
+    cardId: ctx.drawn[idx] ?? 'Place',
+    explanation: 'Fallback random choice (no heuristic available)',
+  };
 }
 
 export const HeuristicBot: BotStrategy = {

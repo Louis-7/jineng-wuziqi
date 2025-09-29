@@ -38,11 +38,13 @@ export function useMatch(opts: MatchOptions = {}) {
   };
   const opponent = opts.opponent ?? 'human';
   const botStrategyId = opts.botStrategyId ?? 'random-baseline';
-  const botStrategies: Record<string, BotStrategy> = {
-    'random-baseline': RandomBot,
-    'heuristic-v1': HeuristicBot,
-  };
-  const botStrategy = botStrategies[botStrategyId] ?? RandomBot;
+  const botStrategies = useMemo<Record<string, BotStrategy>>(
+    () => ({
+      'random-baseline': RandomBot,
+      'heuristic-v1': HeuristicBot,
+    }),
+    [],
+  );
 
   const registry = useMemo(() => {
     // Clone a fresh registry
@@ -115,10 +117,15 @@ export function useMatch(opts: MatchOptions = {}) {
           // ignore
         }
       }
+      const {
+        policy: currentPolicy,
+        opponent: currentOpponent,
+        botStrategyId: currentBotStrategyId,
+      } = optionsRef.current;
       const machine = createTurnMachine({
         game: g,
         rng: rngRef.current,
-        policy,
+        policy: currentPolicy,
         registry,
         drawn: [],
         logs: [],
@@ -130,12 +137,13 @@ export function useMatch(opts: MatchOptions = {}) {
       setChosen(undefined);
       setNeedsTarget(false);
       // If it's a bot opponent's turn, schedule AI decision after a short delay
-      if (optionsRef.current.opponent === 'bot' && g.currentPlayer === 2) {
+      if (currentOpponent === 'bot' && g.currentPlayer === 2) {
+        const strategy = botStrategies[currentBotStrategyId] ?? RandomBot;
         setTimeout(() => {
           const a = actorRef.current;
           if (!a) return;
           const s = a.getSnapshot();
-          const decision = botStrategy.decide(
+          const decision = strategy.decide(
             s.context.game,
             s.context.drawn,
             registry,
@@ -151,7 +159,7 @@ export function useMatch(opts: MatchOptions = {}) {
         }, 320); // small UX delay to show drawn cards
       }
     },
-    [policy, registry, botStrategy],
+    [registry, botStrategies],
   );
 
   // After each turn finishes, snapshot game and reset interim UI state

@@ -5,7 +5,14 @@ export interface NewMatchModalProps {
   open: boolean;
   onClose: () => void;
   onStart: (opts: MatchOptions) => void;
-  defaults: Required<Omit<MatchOptions, 'deck'>>;
+  // Only the core options; deckCounts is optional and currently not edited in this modal.
+  defaults: {
+    boardSize: number;
+    firstPlayer: number; // 1 | 2
+    seed: string | number;
+    policy: 'attacker' | 'draw';
+    deckCounts?: Record<string, number>;
+  };
 }
 
 export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModalProps) {

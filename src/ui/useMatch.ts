@@ -7,12 +7,15 @@ import { registerDefaultBaseCards } from '../domain/cards/baseCards';
 import type { GameState, SimultaneousFivePolicy } from '../domain/engine';
 import type { MatchContext } from '../domain/cards';
 import { createActor } from 'xstate';
+import { buildShuffledDeck } from '../domain/deck';
 
 export interface MatchOptions {
   boardSize?: number;
   firstPlayer?: Player;
   seed?: string | number;
   policy?: SimultaneousFivePolicy;
+  /** cardId -> count mapping for initial deck construction */
+  deckCounts?: Record<string, number>;
 }
 
 export function useMatch(opts: MatchOptions = {}) {
@@ -20,33 +23,12 @@ export function useMatch(opts: MatchOptions = {}) {
   const firstPlayer = opts.firstPlayer ?? 1;
   const seed = opts.seed ?? 'demo';
   const policy = opts.policy ?? 'attacker';
-  // Simple deterministic deck generator from seed and registered cards
-  function generateDeck(prng: PRNG): string[] {
-    // For MVP: fixed multiset then shuffle with PRNG
-    const pool = [
-      'Place',
-      'Place',
-      'Place',
-      'Take',
-      'Take',
-      'PolarityInversion',
-      'SpontaneousGeneration',
-    ];
-    const shuffled = prng.shuffle([...pool]);
-    // Guarantee at least one Place in the very first draw of 2 cards.
-    // draw() pops from the end, so ensure one 'Place' sits at the last index.
-    const idx = shuffled.indexOf('Place');
-    if (idx !== -1) {
-      const last = shuffled.length - 1;
-      const a = shuffled[idx];
-      const b = shuffled[last];
-      if (a !== undefined && b !== undefined) {
-        shuffled[idx] = b;
-        shuffled[last] = a;
-      }
-    }
-    return shuffled;
-  }
+  const deckCounts = opts.deckCounts ?? {
+    Place: 12,
+    Take: 6,
+    PolarityInversion: 3,
+    SpontaneousGeneration: 5,
+  };
 
   const registry = useMemo(() => {
     // Clone a fresh registry
@@ -61,11 +43,12 @@ export function useMatch(opts: MatchOptions = {}) {
     firstPlayer,
     seed,
     policy,
+    deckCounts,
   });
   const [game, setGame] = useState<GameState>(() => ({
     board: createBoard(boardSize),
     currentPlayer: firstPlayer,
-    deck: { drawPile: generateDeck(rngRef.current), discardPile: [] },
+    deck: { drawPile: buildShuffledDeck(rngRef.current, deckCounts, registry), discardPile: [] },
     status: { skipNextTurns: {} },
   }));
 
@@ -206,6 +189,7 @@ export function useMatch(opts: MatchOptions = {}) {
         firstPlayer: newOpts.firstPlayer ?? optionsRef.current.firstPlayer,
         seed: newOpts.seed ?? optionsRef.current.seed,
         policy: newOpts.policy ?? optionsRef.current.policy,
+        deckCounts: newOpts.deckCounts ?? optionsRef.current.deckCounts,
       } as Required<MatchOptions>;
 
       // Stop any running actor
@@ -223,7 +207,10 @@ export function useMatch(opts: MatchOptions = {}) {
       const g: GameState = {
         board: createBoard(merged.boardSize),
         currentPlayer: merged.firstPlayer,
-        deck: { drawPile: generateDeck(rngRef.current), discardPile: [] },
+        deck: {
+          drawPile: buildShuffledDeck(rngRef.current, merged.deckCounts, registry),
+          discardPile: [],
+        },
         status: { skipNextTurns: {} },
       };
       optionsRef.current = merged;
@@ -234,7 +221,7 @@ export function useMatch(opts: MatchOptions = {}) {
       setNeedsTarget(false);
       startNewTurn(g);
     },
-    [startNewTurn],
+    [startNewTurn, registry],
   );
 
   return {

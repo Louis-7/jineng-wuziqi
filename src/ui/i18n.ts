@@ -11,11 +11,11 @@ i18n.use(initReactI18next).init({
     zh: {
       translation: {
         'app.title': '技能五子棋',
-        'app.subtitle': '五子棋 + 技能卡 (演示版)',
+        'app.subtitle': '五子棋 + 技能卡',
         'nav.newMatch': '新对局',
         'nav.settings': '设置',
         'nav.help': '帮助',
-        'ai.thinking': 'AI思考中...',
+        'ai.thinking': '🤖思考中...',
         'log.title': '回合日志',
         'log.empty': '暂无回合。',
         'log.turn': '回合 {{n}} – P{{p}} {{who}}',
@@ -69,11 +69,11 @@ i18n.use(initReactI18next).init({
     en: {
       translation: {
         'app.title': 'Jineng Wuziqi',
-        'app.subtitle': 'Gomoku + Cards (MVP demo)',
+        'app.subtitle': 'Gomoku + Cards',
         'nav.newMatch': 'New Match',
         'nav.settings': 'Settings',
         'nav.help': 'Help',
-        'ai.thinking': 'AI thinking...',
+        'ai.thinking': '🤖 thinking...',
         'log.title': 'Turn Log',
         'log.empty': 'No turns yet.',
         'log.turn': 'Turn {{n}} – P{{p}} {{who}}',

@@ -21,7 +21,8 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
         </div>
         <div className="prose prose-sm max-w-none">
           <p>{t('help.p1')}</p>
-          <ul>
+          <br />
+          <ul className="list-disc list-inside pl-1 space-y-1 marker:text-stone-500">
             <li>{t('help.li1')}</li>
             <li>{t('help.li2')}</li>
             <li>{t('help.li3')}</li>

@@ -100,6 +100,10 @@ See `docs/TODO.md` for full list.
 - Tailwind for styling; avoid inline style objects except for dynamic SVG attributes
 - Keep UI dumb: no rule branching inside React components
 
+### Repo Meta
+
+Internal GitHub automation & AI customization docs live in [`./.github/STRUCTURE.md`](./.github/STRUCTURE.md).
+
 ## License
 
 Apache-2.0

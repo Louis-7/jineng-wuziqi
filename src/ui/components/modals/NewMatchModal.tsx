@@ -12,6 +12,7 @@ export interface NewMatchModalProps {
     seed: string | number;
     policy: 'attacker' | 'draw';
     deckCounts?: Record<string, number>;
+    opponent?: 'human' | 'bot';
   };
 }
 
@@ -20,6 +21,7 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
   const [firstPlayer, setFirstPlayer] = useState<number>(defaults.firstPlayer);
   const [seed, setSeed] = useState<string>(String(defaults.seed));
   const [policy, setPolicy] = useState<'attacker' | 'draw'>(defaults.policy);
+  const [opponent, setOpponent] = useState<'human' | 'bot'>(defaults.opponent ?? 'human');
 
   // When modal opens, refresh fields from provided defaults
   useEffect(() => {
@@ -31,6 +33,7 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
       const randSeed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
       setSeed(randSeed);
       setPolicy(defaults.policy);
+      setOpponent(defaults.opponent ?? 'human');
     }
   }, [open, defaults]);
 
@@ -86,6 +89,18 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
               <option value="draw">Draw</option>
             </select>
           </label>
+
+          <label className="text-sm flex flex-col gap-1">
+            <span>Opponent</span>
+            <select
+              value={opponent}
+              onChange={(e) => setOpponent(e.target.value as 'human' | 'bot')}
+              className="rounded border border-stone-300 px-2 py-1"
+            >
+              <option value="human">Local Player 2</option>
+              <option value="bot">AI Bot (baseline)</option>
+            </select>
+          </label>
         </div>
 
         <div className="mt-4 text-xs text-stone-600">
@@ -104,6 +119,7 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
                 .slice(2, 10)}`;
               setSeed(randSeed);
               setPolicy(defaults.policy);
+              setOpponent(defaults.opponent ?? 'human');
             }}
           >
             Reset to defaults
@@ -116,6 +132,7 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
                 firstPlayer: firstPlayer as 1 | 2,
                 seed,
                 policy,
+                opponent,
               };
               onStart(opts);
             }}

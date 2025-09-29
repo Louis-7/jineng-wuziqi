@@ -8,6 +8,8 @@ import type { GameState, SimultaneousFivePolicy } from '../domain/engine';
 import type { MatchContext } from '../domain/cards';
 import { createActor } from 'xstate';
 import { buildShuffledDeck } from '../domain/deck';
+import { RandomBot } from '../ai/randomStrategy';
+import type { BotStrategy } from '../ai/types';
 
 export interface MatchOptions {
   boardSize?: number;
@@ -16,6 +18,10 @@ export interface MatchOptions {
   policy?: SimultaneousFivePolicy;
   /** cardId -> count mapping for initial deck construction */
   deckCounts?: Record<string, number>;
+  /** Opponent type: human (local hotseat) or bot */
+  opponent?: 'human' | 'bot';
+  /** Which bot strategy id to use (currently only 'random-baseline') */
+  botStrategyId?: string;
 }
 
 export function useMatch(opts: MatchOptions = {}) {
@@ -29,6 +35,12 @@ export function useMatch(opts: MatchOptions = {}) {
     PolarityInversion: 3,
     SpontaneousGeneration: 5,
   };
+  const opponent = opts.opponent ?? 'human';
+  const botStrategyId = opts.botStrategyId ?? 'random-baseline';
+  const botStrategies: Record<string, BotStrategy> = {
+    'random-baseline': RandomBot,
+  };
+  const botStrategy = botStrategies[botStrategyId] ?? RandomBot;
 
   const registry = useMemo(() => {
     // Clone a fresh registry
@@ -44,6 +56,8 @@ export function useMatch(opts: MatchOptions = {}) {
     seed,
     policy,
     deckCounts,
+    opponent,
+    botStrategyId,
   });
   const [game, setGame] = useState<GameState>(() => ({
     board: createBoard(boardSize),
@@ -60,8 +74,12 @@ export function useMatch(opts: MatchOptions = {}) {
   type Actor = ReturnType<typeof createActor<TurnMachine>>;
   const actorRef = useRef<Actor | null>(null);
 
+  // Placeholder declarations for functions defined later (so bot scheduling can reference typed versions)
+  const chooseCardRef = useRef<(cardId: string) => void>();
+  const selectCellRef = useRef<(p: Point) => void>();
+
   const startNewTurn = useCallback(
-    (g: GameState) => {
+    (g: GameState): void => {
       // If the game already has a winner, do not start a new turn.
       if (g.winner) {
         if (actorRef.current) {
@@ -100,13 +118,34 @@ export function useMatch(opts: MatchOptions = {}) {
       setDrawn(snap.context.drawn);
       setChosen(undefined);
       setNeedsTarget(false);
+      // If it's a bot opponent's turn, schedule AI decision after a short delay
+      if (optionsRef.current.opponent === 'bot' && g.currentPlayer === 2) {
+        setTimeout(() => {
+          const a = actorRef.current;
+          if (!a) return;
+          const s = a.getSnapshot();
+          const decision = botStrategy.decide(
+            s.context.game,
+            s.context.drawn,
+            registry,
+            rngRef.current,
+          );
+          if (decision.cardId) {
+            chooseCardRef.current?.(decision.cardId);
+            if (decision.target && decision.target.kind === 'cell') {
+              const point = decision.target.point;
+              setTimeout(() => selectCellRef.current?.(point), 40);
+            }
+          }
+        }, 320); // small UX delay to show drawn cards
+      }
     },
-    [policy, registry],
+    [policy, registry, botStrategy],
   );
 
   // After each turn finishes, snapshot game and reset interim UI state
   const chooseCard = useCallback(
-    (cardId: string) => {
+    (cardId: string): void => {
       // Ignore interactions once the game is finished
       if (game.winner) return;
       const actor = actorRef.current;
@@ -142,7 +181,7 @@ export function useMatch(opts: MatchOptions = {}) {
   );
 
   const selectCell = useCallback(
-    (p: Point) => {
+    (p: Point): void => {
       // Ignore interactions once the game is finished
       if (game.winner) return;
       const actor = actorRef.current;
@@ -173,6 +212,10 @@ export function useMatch(opts: MatchOptions = {}) {
     [game.winner, chosen, startNewTurn],
   );
 
+  // Update refs after hooks are defined
+  chooseCardRef.current = chooseCard;
+  selectCellRef.current = selectCell;
+
   // Start first turn on mount if no drawn yet
   useEffect(() => {
     startNewTurn(game);
@@ -190,6 +233,8 @@ export function useMatch(opts: MatchOptions = {}) {
         seed: newOpts.seed ?? optionsRef.current.seed,
         policy: newOpts.policy ?? optionsRef.current.policy,
         deckCounts: newOpts.deckCounts ?? optionsRef.current.deckCounts,
+        opponent: newOpts.opponent ?? optionsRef.current.opponent,
+        botStrategyId: newOpts.botStrategyId ?? optionsRef.current.botStrategyId,
       } as Required<MatchOptions>;
 
       // Stop any running actor
@@ -248,6 +293,7 @@ export function useMatch(opts: MatchOptions = {}) {
       const res = def.validateTarget(mc, { kind: 'cell', point: p } as never);
       return res.ok;
     },
+    isBotTurn: optionsRef.current.opponent === 'bot' && game.currentPlayer === 2,
   } as const;
 }
 

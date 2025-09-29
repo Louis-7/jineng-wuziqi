@@ -71,8 +71,8 @@
 
 ## 11) AI-ready plumbing
 
-- [] BotStrategy interface: decideTurn(state, availableCards, rng)
-- [] Baseline random strategy and injection points (not enabled by default)
+- [x] BotStrategy interface: decideTurn(state, availableCards, rng)
+- [x] Baseline random strategy and injection points (not enabled by default — selectable via New Match modal)
 
 ## 12) Tests & CI/CD
 

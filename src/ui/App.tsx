@@ -20,11 +20,13 @@ export default function App() {
     resetMatch,
     currentOptions,
     isCellEnabled,
+    isBotTurn,
   } = useMatch({
     boardSize: 15,
     firstPlayer: 1,
     seed: 'demo',
     policy: 'attacker',
+    opponent: 'human',
   });
 
   const [showNewMatch, setShowNewMatch] = useState(false);
@@ -104,6 +106,9 @@ export default function App() {
               needsTarget={needsTarget}
               disabled={Boolean(game.winner)}
             />
+            {isBotTurn && !game.winner && (
+              <div className="mt-2 text-xs text-indigo-600 animate-pulse">AI thinking...</div>
+            )}
           </div>
         </aside>
       </main>
@@ -120,6 +125,7 @@ export default function App() {
           firstPlayer: currentOptions.firstPlayer,
           seed: String(currentOptions.seed),
           policy: currentOptions.policy,
+          opponent: currentOptions.opponent,
         }}
       />
 

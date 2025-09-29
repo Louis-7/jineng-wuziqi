@@ -61,29 +61,15 @@ export function createTurnMachine(initialContext: TurnContext) {
           return [...context.logs, { at, tag: 'drawTwo', message: msg }];
         },
       }),
-      setChosen: assign(({ context, event }) => {
+      setChosen: assign(({ event }) => {
         if (event.type !== 'CHOOSE_CARD') return {};
-        const other = context.drawn.find((c: CardId) => c !== event.cardId);
-        if (!other) return { chosen: event.cardId };
-        // immutably discard the unchosen card
-        return {
-          chosen: event.cardId,
-          game: {
-            ...context.game,
-            deck: {
-              drawPile: context.game.deck.drawPile,
-              discardPile: [...context.game.deck.discardPile, other],
-            },
-          },
-        };
+        // Do not mutate deck here; discard of unplayed card(s) happens at resolve time now.
+        return { chosen: event.cardId, target: undefined };
       }),
       logChosen: assign(({ context, event }) => {
         if (event.type !== 'CHOOSE_CARD') return {};
         const at = context.logs.length + 1;
-        const other = context.drawn.find((c: CardId) => c !== event.cardId);
-        const msg = other
-          ? `choose: ${event.cardId} (discard ${other})`
-          : `choose: ${event.cardId}`;
+        const msg = `choose: ${event.cardId}`;
         return { logs: [...context.logs, { at, tag: 'choose', message: msg }] };
       }),
       setTarget: assign({
@@ -112,13 +98,13 @@ export function createTurnMachine(initialContext: TurnContext) {
         if (!validated.ok) return {};
         const effect = def.effect(mc, context.rng, validated.value);
         const nextGame = applyOps(context.game, effect.ops);
-        // immutably discard the played card
+        // Discard all drawn cards now (played + unplayed). This supports re-selecting before target.
         return {
           game: {
             ...nextGame,
             deck: {
               drawPile: nextGame.deck.drawPile,
-              discardPile: [...nextGame.deck.discardPile, context.chosen],
+              discardPile: [...nextGame.deck.discardPile, ...context.drawn],
             },
           },
           // store ops length in message via separate logger action
@@ -223,6 +209,10 @@ export function createTurnMachine(initialContext: TurnContext) {
             guard: 'targetValid',
             actions: ['setTarget', 'logTarget'],
             target: 'resolve',
+          },
+          CHOOSE_CARD: {
+            actions: ['setChosen', 'logChosen'],
+            target: 'maybeTarget',
           },
         },
       },

@@ -49,7 +49,8 @@ describe('Turn FSM', () => {
     expect(snap.status).toBe('done');
     expect(snap.context.game.board.cells[0]?.[0]).toBe(1);
     expect(snap.context.game.currentPlayer).toBe(2);
-    expect(snap.context.game.deck.discardPile).toContain('Place');
+    // Both drawn cards should be in discard now (played + unplayed) due to deferred discard timing
+    expect([...snap.context.game.deck.discardPile].sort()).toEqual(['Other', 'Place'].sort());
   });
 
   it('skip logic: consumes skip and immediately ends turn', () => {
@@ -97,5 +98,38 @@ describe('Turn FSM', () => {
     const tags = snap.context.logs.map((l) => l.tag);
     expect(tags).toEqual(['drawTwo', 'choose', 'selectTarget', 'resolve', 'checkWin']);
     expect(snap.context.logs[0]?.message.startsWith('drawTwo:')).toBe(true);
+  });
+
+  it('allows re-selecting a different card before providing target', () => {
+    const registry = new CardRegistry();
+    registerDefaultBaseCards(registry);
+    const rng = createPrng('seed');
+    const game = gs(5, 1, ['Take', 'Place']); // drawn will be ['Place','Take']
+    const machine = createTurnMachine({
+      game,
+      rng,
+      policy: 'attacker',
+      registry,
+      drawn: [],
+      logs: [],
+    });
+    const actor = createActor(machine).start();
+    let snap = actor.getSnapshot();
+    expect(snap.value).toBe('choose');
+    // First choose Take (needs target)
+    actor.send({ type: 'CHOOSE_CARD', cardId: 'Take' });
+    snap = actor.getSnapshot();
+    expect(snap.value).toBe('selectTarget');
+    // Re-select Place instead
+    actor.send({ type: 'CHOOSE_CARD', cardId: 'Place' });
+    snap = actor.getSnapshot();
+    // Place also needs target
+    expect(snap.value).toBe('selectTarget');
+    // Provide target (empty cell) for Place
+    actor.send({ type: 'SELECT_TARGET', target: { kind: 'cell', point: { x: 0, y: 0 } } });
+    snap = actor.getSnapshot();
+    expect(snap.status).toBe('done');
+    // Discard pile has both original drawn cards
+    expect([...snap.context.game.deck.discardPile].sort()).toEqual(['Place', 'Take'].sort());
   });
 });

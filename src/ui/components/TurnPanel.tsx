@@ -33,6 +33,11 @@ export function TurnPanel({
             const count = (seen.get(id) ?? 0) + 1;
             seen.set(id, count);
             const meta = registryMeta[id] ?? { name: id, description: id };
+            const isI18nKey = (s: string) => s.startsWith('card.');
+            const displayName = isI18nKey(meta.name) ? t(meta.name) : meta.name;
+            const displayDesc = isI18nKey(meta.description)
+              ? t(meta.description)
+              : meta.description;
             const isChosen = id === chosen;
             const key = `${id}-${count}-${i}`; // includes occurrence + position for uniqueness & stability within turn
             return (
@@ -48,13 +53,13 @@ export function TurnPanel({
                 ].join(' ')}
                 aria-pressed={isChosen}
                 disabled={disabled}
-                title={meta.description}
+                title={displayDesc}
               >
                 <div className="text-sm font-semibold flex items-center gap-2">
                   <span>{meta.icon ?? '🂠'}</span>
-                  <span>{meta.name}</span>
+                  <span>{displayName}</span>
                 </div>
-                <div className="text-xs text-stone-600 max-w-[12rem]">{meta.description}</div>
+                <div className="text-xs text-stone-600 max-w-[12rem]">{displayDesc}</div>
               </button>
             );
           });
@@ -62,7 +67,13 @@ export function TurnPanel({
       </div>
       {chosen && (
         <div className="text-xs text-stone-700">
-          {t('panel.chosen')}: <strong>{registryMeta[chosen]?.name ?? chosen}</strong>
+          {t('panel.chosen')}:{' '}
+          <strong>
+            {(() => {
+              const n = registryMeta[chosen]?.name ?? chosen;
+              return n.startsWith('card.') ? t(n) : n;
+            })()}
+          </strong>
           {needsTarget
             ? ` ${t('panel.chosen.targetPrompt')}`
             : ` ${t('panel.chosen.autoResolves')}`}

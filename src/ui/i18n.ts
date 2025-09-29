@@ -5,13 +5,13 @@ const storedLang = typeof window !== 'undefined' ? window.localStorage.getItem('
 const fallbackLng = 'zh';
 const lang = storedLang || fallbackLng;
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-i18n.use(initReactI18next).init({
+// Deliberately ignore the returned promise because i18n init is synchronous for static resources
+void i18n.use(initReactI18next).init({
   resources: {
     zh: {
       translation: {
         'app.title': '技能五子棋',
-        'app.subtitle': '五子棋 + 技能卡',
+        'app.subtitle': '五子棋 + 技能卡，策略与运气的较量',
         'nav.newMatch': '新对局',
         'nav.settings': '设置',
         'nav.help': '帮助',
@@ -64,6 +64,15 @@ i18n.use(initReactI18next).init({
         'help.li1': '每个回合开始时抽两张牌，选择一张使用，另一张弃置。',
         'help.li2': '某些卡需要选择目标格；按照屏幕提示操作。',
         'help.li3': '若双方同时成五，依据所选规则判定胜负。',
+        // Card meta (names / descriptions)
+        'card.Place.name': '落子无悔',
+        'card.Place.desc': '在棋盘上放置一枚棋子。',
+        'card.Take.name': '飞沙走石',
+        'card.Take.desc': '顾名思义，就是把对手的棋子直接扔掉。',
+        'card.PolarityInversion.name': '两极反转',
+        'card.PolarityInversion.desc': '乾坤倒转，黑白互换，瞬间变天！',
+        'card.SpontaneousGeneration.name': '天女散花',
+        'card.SpontaneousGeneration.desc': '天女撒下五枚神秘棋子，落点全凭天意。',
       },
     },
     en: {
@@ -124,6 +133,16 @@ i18n.use(initReactI18next).init({
         'help.li2': 'Some cards require selecting a target cell; follow the on-screen prompt.',
         'help.li3':
           'If both players complete five simultaneously, the winner is determined by the selected policy.',
+        // Card meta (names / descriptions)
+        'card.Place.name': 'Place Stone',
+        'card.Place.desc': 'Place one stone on an empty cell.',
+        'card.Take.name': 'Take Stone',
+        'card.Take.desc': "Remove an opponent's stone.",
+        'card.PolarityInversion.name': 'Polarity Inversion',
+        'card.PolarityInversion.desc': 'Swap ownership of all stones (1 ↔ 2).',
+        'card.SpontaneousGeneration.name': 'Spontaneous Generation',
+        'card.SpontaneousGeneration.desc':
+          'Randomly place 5 stones with random colors on empty cells.',
       },
     },
   },

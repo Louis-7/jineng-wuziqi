@@ -28,8 +28,9 @@ function hasOpponentStone(b: BoardState, current: Player): boolean {
 export const PlaceCard: CardDefinition<{ kind: 'cell'; point: Point }> = {
   id: 'Place',
   meta: {
-    name: 'Place Stone',
-    description: 'Place one stone on an empty cell.',
+    // i18n keys (see src/ui/i18n.ts)
+    name: 'card.Place.name',
+    description: 'card.Place.desc',
     icon: '●',
   },
   target: { kind: 'cell', mustBeEmpty: true },
@@ -46,8 +47,8 @@ export const PlaceCard: CardDefinition<{ kind: 'cell'; point: Point }> = {
 export const TakeCard: CardDefinition<{ kind: 'cell'; point: Point }> = {
   id: 'Take',
   meta: {
-    name: 'Take Stone',
-    description: "Remove an opponent's stone.",
+    name: 'card.Take.name',
+    description: 'card.Take.desc',
     icon: '×',
   },
   target: { kind: 'cell', mustBeOwnedBy: 'opponent' },
@@ -68,8 +69,8 @@ export const TakeCard: CardDefinition<{ kind: 'cell'; point: Point }> = {
 export const PolarityInversionCard: CardDefinition<{ kind: 'none' }> = {
   id: 'PolarityInversion',
   meta: {
-    name: 'Polarity Inversion',
-    description: 'Swap ownership of all stones (1 ↔ 2).',
+    name: 'card.PolarityInversion.name',
+    description: 'card.PolarityInversion.desc',
     icon: '↔',
   },
   target: { kind: 'none' },
@@ -85,8 +86,8 @@ export const PolarityInversionCard: CardDefinition<{ kind: 'none' }> = {
 export const SpontaneousGenerationCard: CardDefinition<{ kind: 'none' }> = {
   id: 'SpontaneousGeneration',
   meta: {
-    name: 'Spontaneous Generation',
-    description: 'Randomly place 5 stones with random colors on empty cells.',
+    name: 'card.SpontaneousGeneration.name',
+    description: 'card.SpontaneousGeneration.desc',
     icon: '✨',
   },
   target: { kind: 'none' },

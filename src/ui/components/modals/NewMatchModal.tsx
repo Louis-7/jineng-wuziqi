@@ -115,8 +115,8 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
                 onChange={(e) => setBotStrategyId(e.target.value)}
                 className="rounded border border-stone-300 px-2 py-1"
               >
-                <option value="random-baseline">Random</option>
-                <option value="heuristic-v1">Heuristic v1</option>
+                <option value="random-baseline">Easy (Random)</option>
+                <option value="heuristic-v1">Hard (Heuristic)</option>
               </select>
             </label>
           )}

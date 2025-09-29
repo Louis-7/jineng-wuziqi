@@ -57,25 +57,81 @@ function evaluatePointPlace(game: GameState, x: number, y: number, player: Playe
   return score;
 }
 
-function bestPlacement(
-  game: GameState,
-  drawn: CardId[],
-  player: Player,
-): { decision?: BotDecision } {
-  if (!drawn.includes('Place')) return {};
-  let best: { x: number; y: number; score: number } | undefined;
+function isWinningPlacement(game: GameState, x: number, y: number, player: Player): boolean {
+  if (game.board.cells[y]?.[x] !== EMPTY) return false;
+  for (const { dx, dy } of DIRS) {
+    let len = 1;
+    let nx = x + dx;
+    let ny = y + dy;
+    while (nx >= 0 && nx < game.board.size && ny >= 0 && ny < game.board.size) {
+      const v = game.board.cells[ny]?.[nx];
+      if (v !== player) break;
+      len++;
+      nx += dx;
+      ny += dy;
+    }
+    nx = x - dx;
+    ny = y - dy;
+    while (nx >= 0 && nx < game.board.size && ny >= 0 && ny < game.board.size) {
+      const v = game.board.cells[ny]?.[nx];
+      if (v !== player) break;
+      len++;
+      nx -= dx;
+      ny -= dy;
+    }
+    if (len >= 5) return true;
+  }
+  return false;
+}
+
+function collectWinningPlacements(game: GameState, player: Player): { x: number; y: number }[] {
+  const res: { x: number; y: number }[] = [];
   for (let y = 0; y < game.board.size; y++) {
     const row = game.board.cells[y];
     if (!row) continue;
     for (let x = 0; x < game.board.size; x++) {
       if (row[x] !== EMPTY) continue;
-      const own = evaluatePointPlace(game, x, y, player);
-      const opp = evaluatePointPlace(game, x, y, (3 - player) as Player);
-      // Combine: prioritize blocking imminent threats
-      const composite =
-        own + opp * 0.9 + (own >= 10_000 ? 50_000 : 0) + (opp >= 10_000 ? 40_000 : 0);
-      if (!best || composite > best.score) best = { x, y, score: composite };
+      if (isWinningPlacement(game, x, y, player)) res.push({ x, y });
     }
+  }
+  return res;
+}
+
+/** Identify opponent threat moves (cells where they could win next turn). */
+function collectOpponentThreatPlacements(
+  game: GameState,
+  player: Player,
+): { x: number; y: number }[] {
+  const opp = (3 - player) as Player;
+  return collectWinningPlacements(game, opp);
+}
+
+function bestPlacement(
+  game: GameState,
+  drawn: CardId[],
+  player: Player,
+  forceCells?: { x: number; y: number }[],
+): { decision?: BotDecision } {
+  if (!drawn.includes('Place')) return {};
+  // If forceCells provided (e.g. winning move or block list), restrict search to them
+  let best: { x: number; y: number; score: number } | undefined;
+  const iterate = forceCells
+    ? forceCells
+    : (() => {
+        const cells: { x: number; y: number }[] = [];
+        for (let y = 0; y < game.board.size; y++) {
+          const row = game.board.cells[y];
+          if (!row) continue;
+          for (let x = 0; x < game.board.size; x++) if (row[x] === EMPTY) cells.push({ x, y });
+        }
+        return cells;
+      })();
+  for (const { x, y } of iterate) {
+    if (game.board.cells[y]?.[x] !== EMPTY) continue;
+    const own = evaluatePointPlace(game, x, y, player);
+    const opp = evaluatePointPlace(game, x, y, (3 - player) as Player);
+    const composite = own + opp * 0.9 + (own >= 10_000 ? 50_000 : 0) + (opp >= 10_000 ? 40_000 : 0);
+    if (!best || composite > best.score) best = { x, y, score: composite };
   }
   if (best) {
     return {
@@ -126,6 +182,79 @@ export const HeuristicBot: BotStrategy = {
   decide(game: GameState, drawn: CardId[], _registry: CardRegistry, rng: PRNG): BotDecision {
     // Try immediate win or block using Place
     const player: Player = game.currentPlayer;
+    // 1) Immediate winning placement
+    const winningMoves = collectWinningPlacements(game, player);
+    if (drawn.includes('Place') && winningMoves.length > 0) {
+      const winRes = bestPlacement(game, drawn, player, winningMoves).decision;
+      if (winRes) {
+        winRes.explanation = 'Immediate win';
+        winRes.score = 1_000_000;
+        return winRes;
+      }
+    }
+    // 2) Block opponent immediate win
+    const oppThreats = collectOpponentThreatPlacements(game, player);
+    if (drawn.includes('Place') && oppThreats.length > 0) {
+      const blockRes = bestPlacement(game, drawn, player, oppThreats).decision;
+      if (blockRes) {
+        blockRes.explanation = 'Block opponent imminent win';
+        blockRes.score = 900_000;
+        return blockRes;
+      }
+    }
+    // 3) If cannot block with Place but can Take an opponent stone from threat
+    if (!drawn.includes('Place') && oppThreats.length > 0 && drawn.includes('Take')) {
+      // Count stones participating in threats
+      const freq = new Map<string, { x: number; y: number; count: number }>();
+      for (const t of oppThreats) {
+        for (const { dx, dy } of DIRS) {
+          // Reconstruct line containing threat: search contiguous opponent stones both sides
+          let preX = t.x - dx;
+          let preY = t.y - dy;
+          while (
+            preX >= 0 &&
+            preX < game.board.size &&
+            preY >= 0 &&
+            preY < game.board.size &&
+            game.board.cells[preY]?.[preX] === 3 - player
+          ) {
+            const key = preX + ':' + preY;
+            const ent = freq.get(key) ?? { x: preX, y: preY, count: 0 };
+            ent.count++;
+            freq.set(key, ent);
+            preX -= dx;
+            preY -= dy;
+          }
+          let postX = t.x + dx;
+          let postY = t.y + dy;
+          while (
+            postX >= 0 &&
+            postX < game.board.size &&
+            postY >= 0 &&
+            postY < game.board.size &&
+            game.board.cells[postY]?.[postX] === 3 - player
+          ) {
+            const key = postX + ':' + postY;
+            const ent = freq.get(key) ?? { x: postX, y: postY, count: 0 };
+            ent.count++;
+            freq.set(key, ent);
+            postX += dx;
+            postY += dy;
+          }
+        }
+      }
+      let bestStone: { x: number; y: number; count: number } | undefined;
+      for (const v of freq.values()) if (!bestStone || v.count > bestStone.count) bestStone = v;
+      if (bestStone) {
+        return {
+          cardId: 'Take',
+          target: { kind: 'cell', point: { x: bestStone.x, y: bestStone.y } },
+          score: 850_000,
+          explanation: 'Defensive take removing threat stone',
+        };
+      }
+    }
+    // 4) General heuristic evaluation
     const place = bestPlacement(game, drawn, player).decision;
     const take = bestTake(game, drawn, player).decision;
     const candidates: BotDecision[] = [];

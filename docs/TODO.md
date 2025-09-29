@@ -57,8 +57,11 @@
 
 ## 9) Settings & persistence
 
-- [] LocalStorage: persist settings and last match params
-- [] Theme preference (light/dark)
+// Board theme (modern/classic) implemented + persisted. Remaining: broader settings & light/dark.
+
+- [x] Board theme preference (modern/classic) + persistence (LocalStorage)
+- [] LocalStorage: persist last match params (boardSize, seed, policy) & future settings
+- [] Global UI theme (light/dark) toggle
 
 ## 10) Online-ready plumbing
 
@@ -79,6 +82,6 @@
 
 ## 13) Docs & DX
 
-- [] README: run, test, rules summary, extension guide
+- [x] README: run, test, rules summary, extension guide
 - [] Dev doc: how to add a new card (template + registry)
 - [] Keep Info.md/Rules.md changelog updated

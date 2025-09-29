@@ -26,7 +26,7 @@ void i18n.use(initReactI18next).init({
         'status.discard': '弃牌',
         'status.freeze': '冻结',
         'status.winner': '胜者',
-        'panel.drawn': '抽到',
+        'panel.drawn': '抽牌',
         'panel.chosen': '已选',
         'panel.chosen.targetPrompt': '— 请选择棋盘目标',
         'panel.chosen.autoResolves': '— 自动结算',

@@ -22,10 +22,10 @@ describe('Settings / Board Theme', () => {
     expect(rectBefore.getAttribute('fill')).toBe('#f5f5f4');
 
     // Open settings
-    fireEvent.click(screen.getByRole('button', { name: /settings/i }));
-    const classicRadio = screen.getByRole('radio', { name: /classic/i });
+    fireEvent.click(screen.getByRole('button', { name: /Settings/i }));
+    const classicRadio = screen.getByRole('radio', { name: /Classic/i });
     fireEvent.click(classicRadio);
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Save/i }));
 
     const rectAfter = getBoardRect();
     expect(rectAfter.getAttribute('fill')).toBe('#d6b38a');
@@ -35,9 +35,9 @@ describe('Settings / Board Theme', () => {
 
   it('persists theme selection to localStorage', () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: /settings/i }));
-    fireEvent.click(screen.getByRole('radio', { name: /classic/i }));
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Settings/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /Classic/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Save/i }));
     // Unmount and re-mount
     // JSDOM keeps localStorage; re-render new App
     render(<App />);

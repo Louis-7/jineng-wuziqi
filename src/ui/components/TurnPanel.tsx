@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CardId } from '../../domain/deck';
 import type { AnyCardDefinition } from '../../domain/cards';
 
@@ -20,9 +21,10 @@ export function TurnPanel({
   needsTarget,
   disabled = false,
 }: TurnPanelProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-2">
-      <div className="text-sm font-medium">Drawn</div>
+      <div className="text-sm font-medium">{t('panel.drawn')}</div>
       <div className="flex gap-2">
         {(() => {
           // Build stable occurrence counts to ensure unique keys even for duplicate IDs
@@ -60,13 +62,13 @@ export function TurnPanel({
       </div>
       {chosen && (
         <div className="text-xs text-stone-700">
-          Chosen: <strong>{registryMeta[chosen]?.name ?? chosen}</strong>
-          {needsTarget ? ' — pick a target on the board' : ' — auto-resolves'}
+          {t('panel.chosen')}: <strong>{registryMeta[chosen]?.name ?? chosen}</strong>
+          {needsTarget
+            ? ` ${t('panel.chosen.targetPrompt')}`
+            : ` ${t('panel.chosen.autoResolves')}`}
         </div>
       )}
-      {disabled && (
-        <div className="text-xs text-stone-600">Game over — start a new match to play again.</div>
-      )}
+      {disabled && <div className="text-xs text-stone-600">{t('panel.gameOver')}</div>}
     </div>
   );
 }

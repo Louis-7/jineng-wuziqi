@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 
 export type BoardTheme = 'modern' | 'classic';
@@ -7,18 +8,31 @@ export interface SettingsModalProps {
   onClose: () => void;
   theme: BoardTheme;
   onChangeTheme: (t: BoardTheme) => void;
+  language?: string;
+  onChangeLanguage?: (lng: string) => void;
 }
 
 /**
- * Settings modal (MVP): currently only exposes Board Theme selection.
- * Persistence will be added alongside wider settings per TODO #9.
+ * Settings modal: board theme + language selection.
  */
-export function SettingsModal({ open, onClose, theme, onChangeTheme }: SettingsModalProps) {
+export function SettingsModal({
+  open,
+  onClose,
+  theme,
+  onChangeTheme,
+  language = 'zh',
+  onChangeLanguage,
+}: SettingsModalProps) {
   const [localTheme, setLocalTheme] = useState<BoardTheme>(theme);
+  const [localLang, setLocalLang] = useState<string>(language);
+  const { t } = useTranslation();
 
   useEffect(() => {
-    if (open) setLocalTheme(theme);
-  }, [open, theme]);
+    if (open) {
+      setLocalTheme(theme);
+      setLocalLang(language);
+    }
+  }, [open, theme, language]);
 
   if (!open) return null;
   return (
@@ -26,9 +40,9 @@ export function SettingsModal({ open, onClose, theme, onChangeTheme }: SettingsM
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
       <div className="relative z-10 w-[90vw] max-w-md rounded-md bg-white p-4 shadow-lg border border-stone-200">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold">Settings</h2>
+          <h2 className="text-lg font-semibold">{t('settings.title')}</h2>
           <button className="text-sm px-2 py-1 rounded border border-stone-300" onClick={onClose}>
-            Close
+            {t('settings.close')}
           </button>
         </div>
 
@@ -37,22 +51,31 @@ export function SettingsModal({ open, onClose, theme, onChangeTheme }: SettingsM
           onSubmit={(e) => {
             e.preventDefault();
             onChangeTheme(localTheme);
+            if (onChangeLanguage) onChangeLanguage(localLang);
             onClose();
           }}
         >
           <fieldset className="text-sm">
-            <legend className="font-medium mb-2">Board Theme</legend>
+            <legend className="font-medium mb-2">{t('settings.boardTheme')}</legend>
             <div className="grid grid-cols-2 gap-3">
               {(
                 [
-                  { id: 'modern', label: 'Modern', desc: 'Light neutral' },
-                  { id: 'classic', label: 'Classic', desc: 'Wooden' },
+                  {
+                    id: 'modern',
+                    label: t('settings.boardTheme.modern'),
+                    desc: t('settings.boardTheme.modern.desc'),
+                  },
+                  {
+                    id: 'classic',
+                    label: t('settings.boardTheme.classic'),
+                    desc: t('settings.boardTheme.classic.desc'),
+                  },
                 ] as const
-              ).map((t) => {
-                const active = localTheme === t.id;
+              ).map((opt) => {
+                const active = localTheme === opt.id;
                 return (
                   <label
-                    key={t.id}
+                    key={opt.id}
                     className={
                       'cursor-pointer rounded border p-2 flex flex-col gap-2 focus-within:ring-2 focus-within:ring-indigo-400 ' +
                       (active ? 'border-indigo-500 ring-1 ring-indigo-400' : 'border-stone-300')
@@ -62,22 +85,25 @@ export function SettingsModal({ open, onClose, theme, onChangeTheme }: SettingsM
                       type="radio"
                       className="sr-only"
                       name="board-theme"
-                      value={t.id}
+                      value={opt.id}
                       checked={active}
-                      onChange={() => setLocalTheme(t.id as BoardTheme)}
+                      onChange={() => setLocalTheme(opt.id as BoardTheme)}
                     />
                     <div className="text-xs font-medium flex items-center justify-between">
                       <span>
-                        {t.label}
+                        {opt.label}
                         <span className="ml-1 font-normal text-[10px] text-stone-500">
-                          {t.desc}
+                          {opt.desc}
                         </span>
                       </span>
-                      {active && <span className="text-[10px] text-indigo-600">Selected</span>}
+                      {active && (
+                        <span className="text-[10px] text-indigo-600">
+                          {t('settings.selected')}
+                        </span>
+                      )}
                     </div>
-                    {/* mini preview */}
                     <div className="relative h-16 w-full overflow-hidden rounded">
-                      {t.id === 'modern' ? (
+                      {opt.id === 'modern' ? (
                         <div className="h-full w-full bg-stone-100 grid grid-cols-5 grid-rows-5">
                           {Array.from({ length: 25 }, (_, i) => (
                             <div
@@ -126,16 +152,67 @@ export function SettingsModal({ open, onClose, theme, onChangeTheme }: SettingsM
             </div>
           </fieldset>
 
+          <fieldset className="text-sm">
+            <legend className="font-medium mb-2">{t('settings.language')}</legend>
+            <div className="grid grid-cols-2 gap-3">
+              {(
+                [
+                  { id: 'zh', label: '中文', desc: 'Chinese' },
+                  { id: 'en', label: 'English', desc: 'English' },
+                ] as const
+              ).map((opt) => {
+                const active = localLang === opt.id;
+                return (
+                  <label
+                    key={opt.id}
+                    className={
+                      'cursor-pointer rounded border p-2 flex flex-col gap-2 focus-within:ring-2 focus-within:ring-indigo-400 ' +
+                      (active ? 'border-indigo-500 ring-1 ring-indigo-400' : 'border-stone-300')
+                    }
+                  >
+                    <input
+                      type="radio"
+                      className="sr-only"
+                      name="ui-language"
+                      value={opt.id}
+                      checked={active}
+                      onChange={() => setLocalLang(opt.id)}
+                    />
+                    <div className="text-xs font-medium flex items-center justify-between">
+                      <span>
+                        {opt.label}
+                        <span className="ml-1 font-normal text-[10px] text-stone-500">
+                          {opt.desc}
+                        </span>
+                      </span>
+                      {active && (
+                        <span className="text-[10px] text-indigo-600">
+                          {t('settings.selected')}
+                        </span>
+                      )}
+                    </div>
+                    <div className="h-8 flex items-center justify-center text-[11px] text-stone-500">
+                      {opt.id === 'zh' ? '简体中文界面' : 'English interface'}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
               className="text-sm px-3 py-1.5 rounded border border-stone-300"
-              onClick={() => setLocalTheme(theme)}
+              onClick={() => {
+                setLocalTheme(theme);
+                setLocalLang(language);
+              }}
             >
-              Reset
+              {t('settings.reset')}
             </button>
             <button type="submit" className="text-sm px-3 py-1.5 rounded bg-indigo-600 text-white">
-              Save
+              {t('settings.save')}
             </button>
           </div>
         </form>

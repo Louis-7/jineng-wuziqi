@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { GameState } from '../../domain/engine';
 
 export interface StatusBarProps {
@@ -8,6 +9,7 @@ export interface StatusBarProps {
 export function StatusBar({ game }: StatusBarProps) {
   const skip1 = game.status.skipNextTurns[1] ?? 0;
   const skip2 = game.status.skipNextTurns[2] ?? 0;
+  const { t } = useTranslation();
   return (
     <div
       className="flex flex-wrap items-center gap-3 text-sm text-stone-700"
@@ -15,21 +17,23 @@ export function StatusBar({ game }: StatusBarProps) {
       aria-live="polite"
     >
       <span>
-        Current: <strong className="font-semibold">P{game.currentPlayer}</strong>
+        {t('status.current')}: <strong className="font-semibold">P{game.currentPlayer}</strong>
       </span>
       <span>
-        Deck: <strong>{game.deck.drawPile.length}</strong>
+        {t('status.deck')}: <strong>{game.deck.drawPile.length}</strong>
       </span>
       <span>
-        Discard: <strong>{game.deck.discardPile.length}</strong>
+        {t('status.discard')}: <strong>{game.deck.discardPile.length}</strong>
       </span>
       {(skip1 > 0 || skip2 > 0) && (
         <span className="ml-auto text-indigo-700">
-          Freeze → P1: {skip1} • P2: {skip2}
+          {t('status.freeze')} → P1: {skip1} • P2: {skip2}
         </span>
       )}
       {game.winner && (
-        <span className="ml-auto text-green-700 font-medium">Winner: {String(game.winner)}</span>
+        <span className="ml-auto text-green-700 font-medium">
+          {t('status.winner')}: {String(game.winner)}
+        </span>
       )}
     </div>
   );

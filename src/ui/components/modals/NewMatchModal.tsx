@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { MatchOptions } from '../../useMatch';
 
 export interface NewMatchModalProps {
@@ -18,6 +19,7 @@ export interface NewMatchModalProps {
 }
 
 export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModalProps) {
+  const { t } = useTranslation();
   const [boardSize, setBoardSize] = useState<number>(defaults.boardSize);
   const [firstPlayer, setFirstPlayer] = useState<number>(defaults.firstPlayer);
   const [seed, setSeed] = useState<string>(String(defaults.seed));
@@ -49,9 +51,9 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
       <div className="relative z-10 w-[90vw] max-w-2xl rounded-md bg-white p-4 shadow-lg border border-stone-200">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold">New Match</h2>
+          <h2 className="text-lg font-semibold">{t('newMatch.title')}</h2>
           <button className="text-sm px-2 py-1 rounded border border-stone-300" onClick={onClose}>
-            Close
+            {t('newMatch.close')}
           </button>
         </div>
 
@@ -74,7 +76,7 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
           */}
 
           <label className="text-sm flex flex-col gap-1">
-            <span>Seed</span>
+            <span>{t('newMatch.seed')}</span>
             <input
               type="text"
               value={seed}
@@ -84,47 +86,45 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
           </label>
 
           <label className="text-sm flex flex-col gap-1">
-            <span>Simultaneous Five Policy</span>
+            <span>{t('newMatch.policy')}</span>
             <select
               value={policy}
               onChange={(e) => setPolicy(e.target.value as 'attacker' | 'draw')}
               className="rounded border border-stone-300 px-2 py-1"
             >
-              <option value="attacker">Attacker wins</option>
-              <option value="draw">Draw</option>
+              <option value="attacker">{t('newMatch.policy.attacker')}</option>
+              <option value="draw">{t('newMatch.policy.draw')}</option>
             </select>
           </label>
 
           <label className="text-sm flex flex-col gap-1">
-            <span>Opponent</span>
+            <span>{t('newMatch.opponent')}</span>
             <select
               value={opponent}
               onChange={(e) => setOpponent(e.target.value as 'human' | 'bot')}
               className="rounded border border-stone-300 px-2 py-1"
             >
-              <option value="human">Local Player 2</option>
-              <option value="bot">AI Bot (baseline)</option>
+              <option value="human">{t('newMatch.opponent.human')}</option>
+              <option value="bot">{t('newMatch.opponent.bot')}</option>
             </select>
           </label>
 
           {opponent === 'bot' && (
             <label className="text-sm flex flex-col gap-1">
-              <span>AI Strategy</span>
+              <span>{t('newMatch.aiStrategy')}</span>
               <select
                 value={botStrategyId}
                 onChange={(e) => setBotStrategyId(e.target.value)}
                 className="rounded border border-stone-300 px-2 py-1"
               >
-                <option value="random-baseline">Easy (Random)</option>
-                <option value="heuristic-v1">Hard (Heuristic)</option>
+                <option value="random-baseline">{t('newMatch.aiStrategy.random')}</option>
+                <option value="heuristic-v1">{t('newMatch.aiStrategy.heuristic')}</option>
               </select>
             </label>
           )}
         </div>
 
-        <div className="mt-4 text-xs text-stone-600">
-          Deck will be generated deterministically from the seed.
-        </div>
+        <div className="mt-4 text-xs text-stone-600">{t('newMatch.deckNote')}</div>
 
         <div className="mt-4 flex justify-end gap-2">
           <button
@@ -142,7 +142,7 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
               setBotStrategyId(defaults.botStrategyId ?? 'random-baseline');
             }}
           >
-            Reset to defaults
+            {t('newMatch.reset')}
           </button>
           <button
             className="text-sm px-3 py-1.5 rounded bg-indigo-600 text-white"
@@ -158,7 +158,7 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
               onStart(opts);
             }}
           >
-            Start
+            {t('newMatch.start')}
           </button>
         </div>
       </div>

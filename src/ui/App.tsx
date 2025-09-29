@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import './i18n';
+import { useTranslation } from 'react-i18next';
 import { Board } from './components/Board';
 import { StatusBar } from './components/StatusBar';
 import { TurnPanel } from './components/TurnPanel';
@@ -47,6 +49,8 @@ export default function App() {
     return 'modern';
   });
 
+  const { t, i18n } = useTranslation();
+
   // Persist theme
   useEffect(() => {
     try {
@@ -56,12 +60,21 @@ export default function App() {
     }
   }, [boardTheme]);
 
+  // Persist language whenever it changes
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('lang', i18n.language);
+    } catch {
+      // ignore
+    }
+  }, [i18n.language]);
+
   return (
     <div className="min-h-full p-6">
       <header className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Jineng Wuziqi</h1>
-          <p className="text-sm text-gray-600">Gomoku + Cards (MVP demo)</p>
+          <h1 className="text-2xl font-bold">{t('app.title')}</h1>
+          <p className="text-sm text-gray-600">{t('app.subtitle')}</p>
         </div>
         {/* Placeholder for Modals (new match, help) */}
         <div className="flex gap-2">
@@ -69,19 +82,19 @@ export default function App() {
             className="text-sm px-3 py-1.5 rounded border border-stone-300"
             onClick={() => setShowNewMatch(true)}
           >
-            New Match
+            {t('nav.newMatch')}
           </button>
           <button
             className="text-sm px-3 py-1.5 rounded border border-stone-300"
             onClick={() => setShowSettings(true)}
           >
-            Settings
+            {t('nav.settings')}
           </button>
           <button
             className="text-sm px-3 py-1.5 rounded border border-stone-300"
             onClick={() => setShowHelp(true)}
           >
-            Help
+            {t('nav.help')}
           </button>
         </div>
       </header>
@@ -114,23 +127,27 @@ export default function App() {
               disabled={Boolean(game.winner)}
             />
             {isBotTurn && !game.winner && (
-              <div className="mt-2 text-xs text-indigo-600 animate-pulse">AI thinking...</div>
+              <div className="mt-2 text-xs text-indigo-600 animate-pulse">{t('ai.thinking')}</div>
             )}
           </div>
           {showLogs && (
             <div className="rounded-md border border-gray-200 bg-white p-3 shadow-sm max-h-72 overflow-auto text-xs">
-              <h3 className="font-semibold mb-1">Turn Log</h3>
+              <h3 className="font-semibold mb-1">{t('log.title')}</h3>
               <ul className="space-y-2">
-                {turnLogs.map((t) => (
-                  <li key={t.turn} className="border-b last:border-b-0 pb-1">
+                {turnLogs.map((tLog) => (
+                  <li key={tLog.turn} className="border-b last:border-b-0 pb-1">
                     <div className="flex justify-between">
                       <span className="font-medium">
-                        Turn {t.turn} – P{t.player} {t.bot ? '(AI)' : '(Human)'}
+                        {t('log.turn', {
+                          n: tLog.turn,
+                          p: tLog.player,
+                          who: tLog.bot ? t('log.player.ai') : t('log.player.human'),
+                        })}
                       </span>
-                      {t.entries.some((e) => e.tag === 'checkWin') && <span>✔</span>}
+                      {tLog.entries.some((e) => e.tag === 'checkWin') && <span>✔</span>}
                     </div>
                     <ul className="mt-0.5">
-                      {t.entries.map((e) => (
+                      {tLog.entries.map((e) => (
                         <li key={e.at} className="leading-snug">
                           <span className="text-stone-500">[{e.tag}]</span> {e.message}
                         </li>
@@ -138,7 +155,9 @@ export default function App() {
                     </ul>
                   </li>
                 ))}
-                {turnLogs.length === 0 && <li className="italic text-stone-500">No turns yet.</li>}
+                {turnLogs.length === 0 && (
+                  <li className="italic text-stone-500">{t('log.empty')}</li>
+                )}
               </ul>
             </div>
           )}
@@ -168,6 +187,11 @@ export default function App() {
         onClose={() => setShowSettings(false)}
         theme={boardTheme}
         onChangeTheme={(t) => setBoardTheme(t)}
+        language={i18n.language}
+        onChangeLanguage={(lng) => {
+          // Fire-and-forget; UI rerenders via i18next listener
+          void i18n.changeLanguage(lng);
+        }}
       />
     </div>
   );

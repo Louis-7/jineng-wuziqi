@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Board } from './components/Board';
 import { StatusBar } from './components/StatusBar';
 import { TurnPanel } from './components/TurnPanel';
@@ -21,6 +21,7 @@ export default function App() {
     currentOptions,
     isCellEnabled,
     isBotTurn,
+    turnLogs,
   } = useMatch({
     boardSize: 15,
     firstPlayer: 1,
@@ -28,6 +29,12 @@ export default function App() {
     policy: 'attacker',
     opponent: 'human',
   });
+
+  const showLogs = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('log') === 'true';
+  }, []);
 
   const [showNewMatch, setShowNewMatch] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -110,6 +117,31 @@ export default function App() {
               <div className="mt-2 text-xs text-indigo-600 animate-pulse">AI thinking...</div>
             )}
           </div>
+          {showLogs && (
+            <div className="rounded-md border border-gray-200 bg-white p-3 shadow-sm max-h-72 overflow-auto text-xs">
+              <h3 className="font-semibold mb-1">Turn Log</h3>
+              <ul className="space-y-2">
+                {turnLogs.map((t) => (
+                  <li key={t.turn} className="border-b last:border-b-0 pb-1">
+                    <div className="flex justify-between">
+                      <span className="font-medium">
+                        Turn {t.turn} – P{t.player} {t.bot ? '(AI)' : '(Human)'}
+                      </span>
+                      {t.entries.some((e) => e.tag === 'checkWin') && <span>✔</span>}
+                    </div>
+                    <ul className="mt-0.5">
+                      {t.entries.map((e) => (
+                        <li key={e.at} className="leading-snug">
+                          <span className="text-stone-500">[{e.tag}]</span> {e.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+                {turnLogs.length === 0 && <li className="italic text-stone-500">No turns yet.</li>}
+              </ul>
+            </div>
+          )}
         </aside>
       </main>
 
@@ -126,6 +158,7 @@ export default function App() {
           seed: String(currentOptions.seed),
           policy: currentOptions.policy,
           opponent: currentOptions.opponent,
+          botStrategyId: currentOptions.botStrategyId,
         }}
       />
 

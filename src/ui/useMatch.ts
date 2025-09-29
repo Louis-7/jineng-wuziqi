@@ -9,6 +9,7 @@ import type { MatchContext } from '../domain/cards';
 import { createActor } from 'xstate';
 import { buildShuffledDeck } from '../domain/deck';
 import { RandomBot } from '../ai/randomStrategy';
+import { HeuristicBot } from '../ai/heuristicStrategy';
 import type { BotStrategy } from '../ai/types';
 
 export interface MatchOptions {
@@ -39,6 +40,7 @@ export function useMatch(opts: MatchOptions = {}) {
   const botStrategyId = opts.botStrategyId ?? 'random-baseline';
   const botStrategies: Record<string, BotStrategy> = {
     'random-baseline': RandomBot,
+    'heuristic-v1': HeuristicBot,
   };
   const botStrategy = botStrategies[botStrategyId] ?? RandomBot;
 
@@ -70,6 +72,15 @@ export function useMatch(opts: MatchOptions = {}) {
   const [chosen, setChosen] = useState<string | undefined>(undefined);
   const [needsTarget, setNeedsTarget] = useState<boolean>(false);
   const [winningLine, setWinningLine] = useState<Point[] | undefined>(undefined);
+  const [turnLogs, setTurnLogs] = useState<
+    {
+      turn: number;
+      player: Player;
+      bot: boolean;
+      entries: { at: number; tag: string; message: string }[];
+    }[]
+  >([]);
+  const turnCounterRef = useRef(0);
   type TurnMachine = ReturnType<typeof createTurnMachine>;
   type Actor = ReturnType<typeof createActor<TurnMachine>>;
   const actorRef = useRef<Actor | null>(null);
@@ -161,6 +172,17 @@ export function useMatch(opts: MatchOptions = {}) {
         setGame(next);
         const win = checkWinFromLastMove(next.board);
         setWinningLine(win?.line);
+        // store logs
+        turnCounterRef.current += 1;
+        setTurnLogs((prev) => [
+          ...prev,
+          {
+            turn: turnCounterRef.current,
+            player: game.currentPlayer,
+            bot: optionsRef.current.opponent === 'bot' && game.currentPlayer === 2,
+            entries: snap.context.logs.map((l) => ({ at: l.at, tag: l.tag, message: l.message })),
+          },
+        ]);
         if (next.winner) {
           // End of game: stop the actor and clear turn UI
           try {
@@ -177,7 +199,7 @@ export function useMatch(opts: MatchOptions = {}) {
         }
       }
     },
-    [game.winner, startNewTurn],
+    [game.winner, game.currentPlayer, startNewTurn],
   );
 
   const selectCell = useCallback(
@@ -193,6 +215,16 @@ export function useMatch(opts: MatchOptions = {}) {
         setGame(next);
         const win = checkWinFromLastMove(next.board);
         setWinningLine(win?.line);
+        turnCounterRef.current += 1;
+        setTurnLogs((prev) => [
+          ...prev,
+          {
+            turn: turnCounterRef.current,
+            player: game.currentPlayer,
+            bot: optionsRef.current.opponent === 'bot' && game.currentPlayer === 2,
+            entries: snap.context.logs.map((l) => ({ at: l.at, tag: l.tag, message: l.message })),
+          },
+        ]);
         if (next.winner) {
           // End of game: stop the actor and clear turn UI
           try {
@@ -209,7 +241,7 @@ export function useMatch(opts: MatchOptions = {}) {
         }
       }
     },
-    [game.winner, chosen, startNewTurn],
+    [game.winner, chosen, game.currentPlayer, startNewTurn],
   );
 
   // Update refs after hooks are defined
@@ -264,6 +296,8 @@ export function useMatch(opts: MatchOptions = {}) {
       setDrawn([]);
       setChosen(undefined);
       setNeedsTarget(false);
+      setTurnLogs([]);
+      turnCounterRef.current = 0;
       startNewTurn(g);
     },
     [startNewTurn, registry],
@@ -294,6 +328,7 @@ export function useMatch(opts: MatchOptions = {}) {
       return res.ok;
     },
     isBotTurn: optionsRef.current.opponent === 'bot' && game.currentPlayer === 2,
+    turnLogs,
   } as const;
 }
 

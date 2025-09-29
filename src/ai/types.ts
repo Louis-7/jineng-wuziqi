@@ -7,6 +7,8 @@ import { CardRegistry } from '../domain/cards/registry';
 export interface BotDecision {
   cardId: CardId;
   target?: TargetValue; // only if needed
+  score?: number; // heuristic evaluation score (higher is better)
+  explanation?: string; // human-readable reasoning summary
 }
 
 export interface BotStrategy {

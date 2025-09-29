@@ -13,6 +13,7 @@ export interface NewMatchModalProps {
     policy: 'attacker' | 'draw';
     deckCounts?: Record<string, number>;
     opponent?: 'human' | 'bot';
+    botStrategyId?: string;
   };
 }
 
@@ -22,6 +23,9 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
   const [seed, setSeed] = useState<string>(String(defaults.seed));
   const [policy, setPolicy] = useState<'attacker' | 'draw'>(defaults.policy);
   const [opponent, setOpponent] = useState<'human' | 'bot'>(defaults.opponent ?? 'human');
+  const [botStrategyId, setBotStrategyId] = useState<string>(
+    defaults.botStrategyId ?? 'random-baseline',
+  );
 
   // When modal opens, refresh fields from provided defaults
   useEffect(() => {
@@ -34,6 +38,7 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
       setSeed(randSeed);
       setPolicy(defaults.policy);
       setOpponent(defaults.opponent ?? 'human');
+      setBotStrategyId(defaults.botStrategyId ?? 'random-baseline');
     }
   }, [open, defaults]);
 
@@ -101,6 +106,20 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
               <option value="bot">AI Bot (baseline)</option>
             </select>
           </label>
+
+          {opponent === 'bot' && (
+            <label className="text-sm flex flex-col gap-1">
+              <span>AI Strategy</span>
+              <select
+                value={botStrategyId}
+                onChange={(e) => setBotStrategyId(e.target.value)}
+                className="rounded border border-stone-300 px-2 py-1"
+              >
+                <option value="random-baseline">Random</option>
+                <option value="heuristic-v1">Heuristic v1</option>
+              </select>
+            </label>
+          )}
         </div>
 
         <div className="mt-4 text-xs text-stone-600">
@@ -120,6 +139,7 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
               setSeed(randSeed);
               setPolicy(defaults.policy);
               setOpponent(defaults.opponent ?? 'human');
+              setBotStrategyId(defaults.botStrategyId ?? 'random-baseline');
             }}
           >
             Reset to defaults
@@ -133,6 +153,7 @@ export function NewMatchModal({ open, onClose, onStart, defaults }: NewMatchModa
                 seed,
                 policy,
                 opponent,
+                botStrategyId,
               };
               onStart(opts);
             }}

@@ -103,3 +103,32 @@ See `docs/TODO.md` for full list.
 ## License
 
 Apache-2.0
+
+## Deployment (GitHub Pages)
+
+This repo is configured to auto-deploy the production bundle to GitHub Pages using a workflow in `.github/workflows/deploy.yml`.
+
+Steps (one-time repository setup):
+
+1. In GitHub repo settings, enable Pages: Settings → Pages → Build & deployment → Source: GitHub Actions.
+2. Go to Actions → Deploy to GitHub Pages → Run workflow (manual trigger). First successful run provisions the Pages environment.
+
+Trigger model: manual only (workflow_dispatch). It will NOT auto-run on pushes to `main`.
+Pipeline gates: lint, typecheck, test, then build. Only on success will it publish the `dist` folder.
+
+Local preview of the production build:
+
+```bash
+npm run build
+npm run preview
+```
+
+The Vite `base` is set to `/${REPO_NAME}/` so assets resolve correctly at `https://<user>.github.io/jineng-wuziqi/`.
+
+To deploy from a fork or different repo name:
+
+1. Update `REPO_NAME` in `vite.config.ts`.
+2. (Optional) Adjust README references.
+3. Manually re-run the workflow.
+
+Custom domain: set `base: '/'` in `vite.config.ts` and add a `CNAME` file under `public/` (create if missing) before building.

@@ -17,9 +17,9 @@ function getBoardRect() {
 describe('Settings / Board Theme', () => {
   it('switches board theme colors', () => {
     render(<App />);
-    // Default theme should be modern (#f5f5f4 fill)
+    // Default theme should be classic (#f5f5f4 fill)
     const rectBefore = getBoardRect();
-    expect(rectBefore.getAttribute('fill')).toBe('#f5f5f4');
+    expect(rectBefore.getAttribute('fill')).toBe('#d6b38a');
 
     // Open settings
     fireEvent.click(screen.getByRole('button', { name: /Settings/i }));

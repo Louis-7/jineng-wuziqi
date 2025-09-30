@@ -46,7 +46,7 @@ export default function App() {
       const stored = window.localStorage.getItem('boardTheme');
       if (stored === 'modern' || stored === 'classic') return stored;
     }
-    return 'modern';
+    return 'classic';
   });
 
   const { t, i18n } = useTranslation();

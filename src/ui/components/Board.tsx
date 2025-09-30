@@ -71,7 +71,7 @@ export function Board({
     <div className="relative inline-block">
       <div role="grid" aria-label={'Gomoku board ' + String(size) + ' by ' + String(size)}>
         <svg
-          className="block select-none w-[360px] h-[360px] md:w-[480px] md:h-[480px] lg:w-[600px] lg:h-[600px]"
+          className="block select-none w-[360px] h-[360px] md:w-[360px] md:h-[360px] lg:w-[600px] lg:h-[600px]"
           viewBox={viewBox}
         >
           {theme === 'classic' && (
